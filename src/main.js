@@ -4,7 +4,6 @@ await app.init({background: '#FFFFFF', resizeTo: window});
 document.body.appendChild(app.canvas);
 
 // Global Constants
-const IMAGE_SIZE = 32;
 const GRAY = await PIXI.Assets.load('../assets/gray_block_32.png');
 const BLUE = await PIXI.Assets.load('../assets/blue_block_32.png');
 
@@ -15,15 +14,16 @@ class Block extends PIXI.Sprite {
     constructor(x, y, z, texture) {
         super()
 
-        const xCentre = app.screen.width / 2 - IMAGE_SIZE / 2;  // Centre horizontally on screen
-        this.x = (0.50 * x * IMAGE_SIZE) - (0.50 * y * IMAGE_SIZE) + xCentre;
-
-        const yOffset = app.screen.height / 4;
-        const zOffset = z * IMAGE_SIZE / 2
-        this.y = (0.25 * x * IMAGE_SIZE) + (0.25 * y * IMAGE_SIZE) + yOffset - zOffset;
-
-        this.rendering_position = z * IMAGE_SIZE;  // Calculate position of bottom of sprite
         this.texture = texture;
+
+        const xCentre = app.screen.width / 2 - this.width / 2;  // Centre horizontally on screen
+        this.x = (0.50 * x * this.width) - (0.50 * y * this.height) + xCentre;
+
+        const yOffset = app.screen.height / 4;  // Align vertically on screen
+        const zOffset = z * this.height / 2
+        this.y = (0.25 * x * this.width) + (0.25 * y * this.height) + yOffset - zOffset;
+
+        this.rendering_position = z * this.height;  // Calculate position of bottom of sprite
     }
 }
 
