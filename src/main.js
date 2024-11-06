@@ -12,17 +12,13 @@ class Block extends PIXI.Sprite {
     rendering_position
 
     constructor(x, y, z, texture) {
-        super()
-
-        this.texture = texture;
+        super({texture: texture})
 
         const xCentre = app.screen.width / 2 - this.width / 2;  // Centre horizontally on screen
         this.x = (0.50 * x * this.width) - (0.50 * y * this.height) + xCentre;
-
         const yOffset = app.screen.height / 4;  // Align vertically on screen
         const zOffset = z * this.height / 2
         this.y = (0.25 * x * this.width) + (0.25 * y * this.height) + yOffset - zOffset;
-
         this.rendering_position = z * this.height;  // Calculate position of bottom of sprite
     }
 }
@@ -34,13 +30,13 @@ const blocks = [new Block(0, 0, 0, GRAY), new Block(0, 1, 0, GRAY), new Block(0,
 
 // Main logic
 (async () => {
-    sortBlocks();
+    sortBlocksByRenderingOrder();
     drawBlocks();
 })();
 
 // Sort blocks to be in suitable rendering order
-function sortBlocks() {
-    blocks.sort((a, b) => a.rendering_position + b.rendering_position);
+function sortBlocksByRenderingOrder() {
+    blocks.sort((a, b) => a.rendering_position - b.rendering_position);
 }
 
 // Render all blocks provided in list
