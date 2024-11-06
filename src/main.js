@@ -1,5 +1,6 @@
 const app = new PIXI.Application();
 const imageSize = 32;
+const blocks = [[0, 0, 1], [0, 0, 0]];
 
 async function setup() {
     await app.init({background: '#FFFFFF', resizeTo: window});
@@ -9,7 +10,6 @@ async function setup() {
 (async () => {
     await setup();
     await drawGrid();
-    await drawGrid(1.5, 2);
 })();
 
 async function drawTile(x, y, zOffset) {
@@ -20,16 +20,12 @@ async function drawTile(x, y, zOffset) {
     const block = PIXI.Sprite.from(texture);
 
     block.x = xPos;
-    block.y = yPos + zOffset;
+    block.y = yPos + (zOffset * imageSize / 2);
     return block;
 }
 
 async function drawGrid() {
-    const gridSize = Math.floor(app.screen.height / imageSize);
-
-    for (let i = 0; i < gridSize; i++) {
-        for (let j = 0; j < gridSize; j++) {
-            app.stage.addChild(await drawTile(i, j, Math.random()))
-        }
+    for (let i = 0; i < blocks.length; i++) {
+        app.stage.addChild(await drawTile(blocks[i][0], blocks[i][1], blocks[i][2]))
     }
 }
