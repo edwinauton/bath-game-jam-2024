@@ -11,10 +11,10 @@ document.body.appendChild(app.canvas);
  *  @param {Texture} texture    image texture to be rendered for the block
  *  */
 class Block extends PIXI.Sprite {
-    rendering_position
+    rendering_position;
 
     constructor(x, y, z, texture) {
-        super({texture: texture})
+        super({texture: texture});
 
         const xCentre = app.screen.width / 2 - super.width / 2;  // Centre horizontally on screen
         super.x = (0.50 * x * super.width) - (0.50 * y * super.height) + xCentre;
@@ -34,6 +34,26 @@ const BLOCKS = [new Block(0, 0, 0, GRAY), new Block(0, 1, 0, GRAY), new Block(0,
 (async () => {
     sortBlocksByRenderingPosition();
     drawBlocks();
+
+    BLOCKS.forEach(block => {
+        // if (block.canAnimate()) {
+        block.eventMode = 'static';
+        block.on('pointerenter', up);
+        block.on('pointerleave', down);
+
+        function up() {
+            createjs.Tween.get(block)
+                .to({y: block.y -= 5}, 1000, createjs.Ease.sineInOut)
+        }
+
+        function down() {
+            createjs.Tween.get(block)
+                .to({y: block.y += 5}, 1000, createjs.Ease.sineInOut);
+        }
+
+        createjs.Ticker.setFPS(60);
+        createjs.Ticker.addEventListener("tick", app.stage);
+    })
 })();
 
 /* Sort blocks to be in correct rendering order */
@@ -47,3 +67,4 @@ function drawBlocks() {
         app.stage.addChild(BLOCKS[index]);
     }
 }
+
