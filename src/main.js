@@ -67,10 +67,10 @@ function animateBlocks() {
 
         if (block.hasSkyAccess) { // Sky access means that no blocks are above the block
             block.addEventListener('pointerenter', () => {
-                createjs.Tween.get(block).to({y: yPos - (block.height / 10)}, 250, createjs.Ease.sineInOut);
+                createjs.Tween.get(block).to({y: yPos - (block.height / 10)}, 150, createjs.Ease.sineInOut);
             });
             block.addEventListener('pointerleave', () => {
-                createjs.Tween.get(block).to({y: yPos}, 250, createjs.Ease.sineInOut);
+                createjs.Tween.get(block).to({y: yPos}, 150, createjs.Ease.sineInOut);
             });
         }
     })
