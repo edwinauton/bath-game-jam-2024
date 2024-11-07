@@ -1,0 +1,16 @@
+{
+  "blocks": [
+    {
+      "x":0,
+      "y": 0,
+      "z": 0,
+      "texture": "gray_block.png"
+    },
+    {
+      "x":0,
+      "y": 0,
+      "z": 1,
+      "texture": "blue_block.png"
+    }
+  ]
+}
