@@ -62,8 +62,8 @@ function drawBlocks() {
 /* Animate blocks on hover */
 function animateBlocks() {
     BLOCKS.forEach(block => {
-        const yPos = block.y;
-        block.eventMode = 'static';
+        const yPos = block.y; // Store original y-coordinate of block
+        block.eventMode = 'static'; // Allow blocks to be animated
 
         if (block.hasSkyAccess) { // Sky access means that no blocks are above the block
             block.addEventListener('pointerenter', () => {
