@@ -30,13 +30,13 @@ class Block extends PIXI.Sprite {
 
 /* Read blocks from JSON file and make list of Block objects */
 async function createBlocks() {
-    const jsonFile = await PIXI.Assets.load({src: './blocks.json', loader: 'loadJson'});
+    const jsonFile = await PIXI.Assets.load({src: '../resources/blocks.json', loader: 'loadJson'});
     const blocks = jsonFile.blocks;
     const blockObjects = [];
 
     for (const block of blocks) {
         const coords = {'x': block.x, 'y': block.y, 'z': block.z + 1};
-        const texture = await PIXI.Assets.load(`../assets/${block.texture}`);
+        const texture = await PIXI.Assets.load(`../resources/assets/${block.texture}`);
 
         if (blocks.some(obj => Object.keys(coords).every(key => obj[key] === coords[key]))) {
             blockObjects.push(new Block(block.x, block.y, block.z, texture, false));
