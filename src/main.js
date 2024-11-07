@@ -19,7 +19,7 @@ class Block extends PIXI.Sprite {
 
         const xCentre = app.screen.width / 2 - super.width / 2;  // Centre horizontally on-screen
         super.x = (0.50 * x * super.width) - (0.50 * y * super.height) + xCentre;
-        const yAlign = app.screen.height / 4;  // Align vertically on-screen
+        const yAlign = app.screen.height / 3;  // Align vertically on-screen
         const zOffset = z * super.height / 2;
         super.y = (0.25 * x * super.width) + (0.25 * y * super.height) + yAlign - zOffset;
 
@@ -67,7 +67,7 @@ function animateBlocks() {
 
         if (block.hasSkyAccess) { // Sky access means that no blocks are above the block
             block.addEventListener('pointerenter', () => {
-                createjs.Tween.get(block).to({y: yPos - 3}, 250, createjs.Ease.sineInOut);
+                createjs.Tween.get(block).to({y: yPos - (block.height / 10)}, 250, createjs.Ease.sineInOut);
             });
             block.addEventListener('pointerleave', () => {
                 createjs.Tween.get(block).to({y: yPos}, 250, createjs.Ease.sineInOut);
