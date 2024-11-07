@@ -24,7 +24,7 @@ class Block extends PIXI.Sprite {
         super.y = (0.25 * x * super.width) + (0.25 * y * super.height) + yAlign - zOffset;
 
         this.hasSkyAccess = hasSkyAccess;
-        this.rendering_position = z * super.height;  // Calculate position of bottom of sprite
+        this.rendering_position = z * super.height;  // Calculate absolute position of bottom of sprite
     }
 }
 
