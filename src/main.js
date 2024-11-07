@@ -4,7 +4,6 @@ await app.init({background: '#FFFFFF', resizeTo: window});
 document.body.appendChild(app.canvas);
 
 /**
- *  Block class to calculate rendering coordinates and rendering order when created
  *  @param {Number} x               relative x-coordinate for the block
  *  @param {Number} y               relative y-coordinate for the block
  *  @param {Number} z               relative z-coordinate for the block
@@ -14,20 +13,18 @@ document.body.appendChild(app.canvas);
 class Block extends PIXI.Sprite {
     rendering_position;
     hasSkyAccess;
-    zPos;
 
     constructor(x, y, z, texture, hasSkyAccess) {
         super({texture: texture});
-        this.zPos = z;
 
         const xCentre = app.screen.width / 2 - super.width / 2;  // Centre horizontally on-screen
         super.x = (0.50 * x * super.width) - (0.50 * y * super.height) + xCentre;
         const yAlign = app.screen.height / 4;  // Align vertically on-screen
-        const zOffset = this.zPos * super.height / 2;
+        const zOffset = z * super.height / 2;
         super.y = (0.25 * x * super.width) + (0.25 * y * super.height) + yAlign - zOffset;
 
         this.hasSkyAccess = hasSkyAccess;
-        this.rendering_position = this.zPos * super.height;  // Calculate position of bottom of sprite
+        this.rendering_position = z * super.height;  // Calculate position of bottom of sprite
     }
 }
 
@@ -38,8 +35,9 @@ async function createBlocks() {
     const blockObjects = [];
 
     for (const block of blocks) {
-        const coords = {"x": block.x, "y": block.y, "z": block.z + 1};
-        const texture = await PIXI.Assets.load('../assets/' + block.texture)
+        const coords = {'x': block.x, 'y': block.y, 'z': block.z + 1};
+        const texture = await PIXI.Assets.load(`../assets/${block.texture}`);
+
         if (blocks.some(obj => Object.keys(coords).every(key => obj[key] === coords[key]))) {
             blockObjects.push(new Block(block.x, block.y, block.z, texture, false));
         } else {
@@ -64,18 +62,16 @@ function drawBlocks() {
 /* Animate blocks on hover */
 function animateBlocks() {
     BLOCKS.forEach(block => {
+        const yPos = block.y;
+        block.eventMode = 'static';
+
         if (block.hasSkyAccess) { // Sky access means that no blocks are above the block
-            block.eventMode = 'static';
-            block.on('pointerenter', float);
-            block.on('pointerleave', descend);
-
-            function float() {
-                createjs.Tween.get(block).to({y: block.y -= 3}, 1000, createjs.Ease.sineInOut);
-            }
-
-            function descend() {
-                createjs.Tween.get(block).to({y: block.y += 3}, 1000, createjs.Ease.sineInOut);
-            }
+            block.addEventListener('pointerenter', () => {
+                createjs.Tween.get(block).to({y: yPos - 3}, 250, createjs.Ease.sineInOut);
+            });
+            block.addEventListener('pointerleave', () => {
+                createjs.Tween.get(block).to({y: yPos}, 250, createjs.Ease.sineInOut);
+            });
         }
     })
 }
