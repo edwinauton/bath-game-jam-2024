@@ -11,7 +11,7 @@ document.body.appendChild(app.canvas);
  *  @param {Boolean} hasSkyAccess   whether or not the block has sky access (i.e. no blocks above it)
  *  */
 class Block extends PIXI.Sprite {
-    rendering_position;
+    rendering_order;
     hasSkyAccess;
 
     constructor(x, y, z, texture, hasSkyAccess) {
@@ -24,7 +24,7 @@ class Block extends PIXI.Sprite {
         super.y = (0.25 * x * super.width) + (0.25 * y * super.height) + yAlign - zOffset;
 
         this.hasSkyAccess = hasSkyAccess;
-        this.rendering_position = z * super.height;  // Calculate absolute position of bottom of sprite
+        this.rendering_order = z * super.height;  // Calculate absolute position of bottom of sprite
     }
 }
 
@@ -51,7 +51,7 @@ const BLOCKS = await createBlocks(); // List of blocks
 
 /* Sort blocks to be in correct rendering order */
 function sortBlocks() {
-    BLOCKS.sort((a, b) => a.rendering_position - b.rendering_position); // Sort descending
+    BLOCKS.sort((a, b) => a.rendering_order - b.rendering_order); // Sort by rendering order, descending
 }
 
 /* Render each block in the list */
