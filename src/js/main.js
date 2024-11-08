@@ -38,7 +38,7 @@ async function createBlocks() {
         const coords = {'x': block.x, 'y': block.y, 'z': block.z + 1};
         const texture = await PIXI.Assets.load(`../resources/assets/${block.texture}`);
 
-        if (blocks.some(obj => Object.keys(coords).every(key => obj[key] === coords[key]))) {
+        if (blocks.some(obj => Object.keys(coords).every(key => obj[key] === coords[key]))) {  // Use 2d array to tore boolean of whether spot is taken?
             blockObjects.push(new Block(block.x, block.y, block.z, texture, false));
         } else {
             blockObjects.push(new Block(block.x, block.y, block.z, texture, true));
