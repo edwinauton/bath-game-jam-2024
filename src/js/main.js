@@ -10,17 +10,15 @@ const eventEmitter = new PIXI.EventEmitter()
  *  @param {Number} y               relative y-coordinate for the block
  *  @param {Number} z               relative z-coordinate for the block
  *  @param {Texture} texture        image texture to be rendered for the block
- *  @param {Boolean} hasSkyAccess   whether or not the block has sky access (i.e. no blocks above it)
  *  */
 class Block extends PIXI.Sprite {
-    rendering_order;
-    hasSkyAccess;
+    renderingOrder;
     xRelative;
     yRelative;
     zRelative;
     staticY;
 
-    constructor(x, y, z, texture, hasSkyAccess) {
+    constructor(x, y, z, texture) {
         super({texture: texture});
         this.xRelative = x;
         this.yRelative = y;
@@ -31,14 +29,13 @@ class Block extends PIXI.Sprite {
         this.y = absoluteCoords.y
         this.staticY = this.y // Store y-coordinates when not animated
 
-        this.hasSkyAccess = hasSkyAccess;
-        this.rendering_order = z * this.height;  // Calculate absolute position of bottom of sprite
+        this.renderingOrder = z * this.height;  // Calculate absolute position of bottom of sprite
     }
 
     animate() {
         super.eventMode = 'static'; // Allow blocks to be animated
 
-        if (this.hasSkyAccess) { // Sky access means that no blocks are above the block
+        if (!this.hasBlockAbove) {
             this.addEventListener('pointerenter', () => {
                 createjs.Tween.get(this).to({y: this.staticY - (this.height / 10)}, 150, createjs.Ease.sineInOut);
             });
@@ -47,19 +44,19 @@ class Block extends PIXI.Sprite {
             });
             this.addEventListener('click', () => {
                 createjs.Tween.get(this).to({y: this.staticY}, 150, createjs.Ease.sineInOut); // Reset block to original position
-                eventEmitter.emit('movePlayer', this.x, (this.staticY - this.height / 2))
-                console.log(this.getAbsolutePosition())
-                console.log(this.getRelativePosition())
+                eventEmitter.emit('movePlayer', this)
             });
         }
     }
 
-    getAbsolutePosition() {
-        return {x: this.x, y: this.staticY};
-    }
-
-    getRelativePosition() {
-        return {x: this.xRelative, y: this.yRelative, z: this.zRelative};
+    checkBlockAbove(blocks) {
+        const blockMap = new Map();
+        blocks.forEach(block => {
+            const key = `${block.xRelative},${block.yRelative},${block.zRelative}`;
+            blockMap.set(key, block);
+        });
+        const key = `${this.xRelative},${this.yRelative},${this.zRelative + 1}`;
+        this.hasBlockAbove = blockMap.has(key);
     }
 
     render() {
@@ -74,21 +71,34 @@ class Block extends PIXI.Sprite {
  *  @param {Texture} texture        image texture to be rendered for the player
  *  */
 class Player extends PIXI.Sprite {
-    rendering_order;
+    renderingOrder;
+    xRelative;
+    yRelative;
+    zRelative;
 
     constructor(x, y, z, texture) {
         super({texture: texture});
+        this.xRelative = x;
+        this.yRelative = y;
+        this.zRelative = z;
 
         const absoluteCoords = relativeToAbsolute(x, y, z, this.width, this.height);
         this.x = absoluteCoords.x
         this.y = absoluteCoords.y
 
-        this.rendering_order = Infinity; // Always on top
+        this.renderingOrder = Infinity; // Always on top
         eventEmitter.on('movePlayer', this.moveTo.bind(this));
     }
 
-    moveTo(x, y) {
-        createjs.Tween.get(this).to({x: x, y: y}, 1000, createjs.Ease.sineInOut); // Basic movement
+    moveTo(block) {
+        if (block.zRelative - this.zRelative <= 1) {
+            const newY = block.staticY - block.height / 2
+            createjs.Tween.get(this).to({x: block.x, y: newY}, 1000, createjs.Ease.sineInOut); // Basic movement
+
+            this.xRelative = block.xRelative;
+            this.yRelative = block.yRelative;
+            this.zRelative = block.zRelative + 1;
+        }
     }
 
     render() {
@@ -113,24 +123,27 @@ async function createBlocks() {
     const jsonFile = await PIXI.Assets.load({src: '../resources/blocks.json', loader: 'loadJson'});
     const blocks = jsonFile.blocks;
 
+    const blockObjects = []
     for (const block of blocks) {
         const texture = await PIXI.Assets.load(`../resources/assets/${block.texture}`);
-        const coords = {'x': block.x, 'y': block.y, 'z': block.z + 1};
-        const skyAccess = blocks.some(obj => Object.keys(coords).every(key => obj[key] === coords[key]));
-        addNewBlock(new Block(block.x, block.y, block.z, texture, !skyAccess));
+        blockObjects.push(new Block(block.x, block.y, block.z, texture));
     }
+    return blockObjects;
 }
 
 /* Sort blocks to be in correct rendering order */
 function sortBlocks() {
-    app.stage.children.sort((a, b) => a.rendering_order - b.rendering_order); // Sort by rendering order, descending
+    app.stage.children.sort((a, b) => a.renderingOrder - b.renderingOrder); // Sort by rendering order, descending
 }
 
 /* Run every time a new block is created */
-function addNewBlock(block) {
-    block.animate();
-    block.render()
-    sortBlocks();
+function addNewBlocks(blocks) {
+    blocks.forEach(block => {
+        block.checkBlockAbove(blocks);
+        block.animate();
+        block.render()
+        sortBlocks();
+    })
 }
 
 /* Create player */
@@ -142,6 +155,7 @@ async function createPlayer() {
 
 /* Main logic */
 (async () => {
-    await createBlocks();
+    const blocks = await createBlocks();
+    addNewBlocks(blocks);
     await createPlayer();
 })();
