@@ -4630,7 +4630,19 @@
       "x": 9,
       "y": 9,
       "z": 1,
-      "texture": "blue_slab.png"
+      "texture": "blue_block.png"
+    },
+    {
+      "x": 9,
+      "y": 10,
+      "z": 1,
+      "texture": "blue_block.png"
+    },
+    {
+      "x": 9,
+      "y": 10,
+      "z": 2,
+      "texture": "blue_block.png"
     }
   ]
 }

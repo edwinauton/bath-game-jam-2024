@@ -93,7 +93,7 @@ class Player extends GameJamSprite {
 
     /* Smoothly move the player from their current position to a new block */ // TODO: Use pathfinding algorithm?
     moveTo(block) {
-        if (block.zRelative - this.zRelative <= 1) {
+        if (Math.abs((block.zRelative + 1) - this.zRelative) <= 1) {
             const yAbsolute = block.staticY - block.height / 2; // Correct for block size
             createjs.Tween.get(this).to({x: block.x, y: yAbsolute}, 2000, createjs.Ease.sineInOut); // Basic movement
 
@@ -135,7 +135,7 @@ function addNewBlocks(blocks) {
 /* Create player */
 async function createPlayer() {
     const texture = await PIXI.Assets.load(`../resources/assets/blue_slab.png`);
-    const player = new Player(15, 15, 1, texture)
+    const player = new Player(9, 9, 2, texture)
     player.render();
 }
 
