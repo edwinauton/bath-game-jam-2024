@@ -3,20 +3,13 @@ const app = new PIXI.Application();
 await app.init({background: '#FFFFFF', resizeTo: window});
 document.body.appendChild(app.canvas);
 
-const eventEmitter = new PIXI.EventEmitter()
+const eventEmitter = new PIXI.EventEmitter();
 
-/**
- *  @param {Number} x               relative x-coordinate for the block
- *  @param {Number} y               relative y-coordinate for the block
- *  @param {Number} z               relative z-coordinate for the block
- *  @param {Texture} texture        image texture to be rendered for the block
- *  */
-class Block extends PIXI.Sprite {
-    renderingOrder;
+/* Parent class for Block and Player with shared fields and methods */
+class GameJamSprite extends PIXI.Sprite {
     xRelative;
     yRelative;
     zRelative;
-    staticY;
 
     constructor(x, y, z, texture) {
         super({texture: texture});
@@ -24,16 +17,38 @@ class Block extends PIXI.Sprite {
         this.yRelative = y;
         this.zRelative = z;
 
-        const absoluteCoords = relativeToAbsolute(x, y, z, this.width, this.height);
-        this.x = absoluteCoords.x
-        this.y = absoluteCoords.y
-        this.staticY = this.y // Store y-coordinates when not animated
+        const xCentre = app.screen.width / 2 - this.width / 2;  // Centre horizontally on-screen
+        this.x = (0.50 * x * this.width) - (0.50 * y * this.height) + xCentre;
 
-        this.renderingOrder = z * this.height;  // Calculate absolute position of bottom of sprite
+        const yAlign = app.screen.height / 3;  // Align vertically on-screen
+        const zOffset = z * this.height / 2;
+        this.y = (0.25 * x * this.width) + (0.25 * y * this.height) + yAlign - zOffset;
     }
 
+    render() {
+        app.stage.addChild(this);
+    }
+}
+
+/**
+ *  @param {Number} x               relative x-coordinate for the block
+ *  @param {Number} y               relative y-coordinate for the block
+ *  @param {Number} z               relative z-coordinate for the block
+ *  @param {Texture} texture        image texture to be rendered for the block
+ *  */
+class Block extends GameJamSprite {
+    staticY;
+
+    constructor(x, y, z, texture) {
+        super(x, y, z, texture);
+
+        this.renderingOrder = z * this.height;  // Calculate absolute position of bottom of sprite
+        this.staticY = this.y;
+    }
+
+    /* Animations to be run on the block when hovered over, clicked, etc.*/
     animate() {
-        super.eventMode = 'static'; // Allow blocks to be animated
+        this.eventMode = 'static'; // Allow blocks to be animated
 
         if (!this.hasBlockAbove) {
             this.addEventListener('pointerenter', () => {
@@ -44,23 +59,21 @@ class Block extends PIXI.Sprite {
             });
             this.addEventListener('click', () => {
                 createjs.Tween.get(this).to({y: this.staticY}, 150, createjs.Ease.sineInOut); // Reset block to original position
-                eventEmitter.emit('movePlayer', this)
+                eventEmitter.emit('movePlayer', this);
             });
         }
     }
 
+    /* Check if there is a block immediately above this one*/
     checkBlockAbove(blocks) {
         const blockMap = new Map();
         blocks.forEach(block => {
-            const key = `${block.xRelative},${block.yRelative},${block.zRelative}`;
-            blockMap.set(key, block);
+            const key = `${block.xRelative},${block.yRelative},${block.zRelative}`;  // Create keys to add to map
+            blockMap.set(key, block); // Create map of key (x,y,z) -> value (Block)
         });
-        const key = `${this.xRelative},${this.yRelative},${this.zRelative + 1}`;
-        this.hasBlockAbove = blockMap.has(key);
-    }
 
-    render() {
-        app.stage.addChild(this);
+        const key = `${this.xRelative},${this.yRelative},${this.zRelative + 1}`; // Create key to search in map
+        this.hasBlockAbove = blockMap.has(key);
     }
 }
 
@@ -70,52 +83,25 @@ class Block extends PIXI.Sprite {
  *  @param {Number} z               relative z-coordinate spawn for the player
  *  @param {Texture} texture        image texture to be rendered for the player
  *  */
-class Player extends PIXI.Sprite {
-    renderingOrder;
-    xRelative;
-    yRelative;
-    zRelative;
-
+class Player extends GameJamSprite {
     constructor(x, y, z, texture) {
-        super({texture: texture});
-        this.xRelative = x;
-        this.yRelative = y;
-        this.zRelative = z;
-
-        const absoluteCoords = relativeToAbsolute(x, y, z, this.width, this.height);
-        this.x = absoluteCoords.x
-        this.y = absoluteCoords.y
+        super(x, y, z, texture);
 
         this.renderingOrder = Infinity; // Always on top
-        eventEmitter.on('movePlayer', this.moveTo.bind(this));
+        eventEmitter.on('movePlayer', this.moveTo.bind(this));  // Run 'moveTo' when 'movePlayer' event triggers
     }
 
+    /* Smoothly move the player from their current position to a new block */ // TODO: Use pathfinding algorithm?
     moveTo(block) {
         if (block.zRelative - this.zRelative <= 1) {
-            const newY = block.staticY - block.height / 2
-            createjs.Tween.get(this).to({x: block.x, y: newY}, 1000, createjs.Ease.sineInOut); // Basic movement
+            const yAbsolute = block.staticY - block.height / 2; // Correct for block size
+            createjs.Tween.get(this).to({x: block.x, y: yAbsolute}, 2000, createjs.Ease.sineInOut); // Basic movement
 
             this.xRelative = block.xRelative;
             this.yRelative = block.yRelative;
             this.zRelative = block.zRelative + 1;
         }
     }
-
-    render() {
-        app.stage.addChild(this);
-    }
-}
-
-/* Convert relative cartesian coordinate to absolute isometric coordinates */
-function relativeToAbsolute(x, y, z, width, height) {
-    const xCentre = app.screen.width / 2 - width / 2;  // Centre horizontally on-screen
-    const absoluteX = (0.50 * x * width) - (0.50 * y * height) + xCentre
-
-    const yAlign = app.screen.height / 3;  // Align vertically on-screen
-    const zOffset = z * height / 2;
-    const absoluteY = (0.25 * x * width) + (0.25 * y * height) + yAlign - zOffset;
-
-    return {x: absoluteX, y: absoluteY};
 }
 
 /* Read blocks from JSON file and make list of Block objects */
@@ -123,7 +109,7 @@ async function createBlocks() {
     const jsonFile = await PIXI.Assets.load({src: '../resources/blocks.json', loader: 'loadJson'});
     const blocks = jsonFile.blocks;
 
-    const blockObjects = []
+    const blockObjects = [];
     for (const block of blocks) {
         const texture = await PIXI.Assets.load(`../resources/assets/${block.texture}`);
         blockObjects.push(new Block(block.x, block.y, block.z, texture));
@@ -136,14 +122,14 @@ function sortBlocks() {
     app.stage.children.sort((a, b) => a.renderingOrder - b.renderingOrder); // Sort by rendering order, descending
 }
 
-/* Run every time a new block is created */
+/* */
 function addNewBlocks(blocks) {
     blocks.forEach(block => {
         block.checkBlockAbove(blocks);
         block.animate();
         block.render()
         sortBlocks();
-    })
+    });
 }
 
 /* Create player */
@@ -155,7 +141,6 @@ async function createPlayer() {
 
 /* Main logic */
 (async () => {
-    const blocks = await createBlocks();
-    addNewBlocks(blocks);
+    addNewBlocks(await createBlocks());
     await createPlayer();
 })();
