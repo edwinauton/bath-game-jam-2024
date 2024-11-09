@@ -13,9 +13,15 @@ document.body.appendChild(app.canvas);
 class Block extends PIXI.Sprite {
     rendering_order;
     hasSkyAccess;
+    xPos;
+    yPos;
+    zPos;
 
     constructor(x, y, z, texture, hasSkyAccess) {
         super({texture: texture});
+        this.xPos = x;
+        this.yPos = y;
+        this.zPos = z;
 
         const xCentre = app.screen.width / 2 - super.width / 2;  // Centre horizontally on-screen
         super.x = (0.50 * x * super.width) - (0.50 * y * super.height) + xCentre;
@@ -29,7 +35,7 @@ class Block extends PIXI.Sprite {
 }
 
 /* Read blocks from JSON file and make list of Block objects */
-async function createBlocks() {
+async function readBlocks() {
     const jsonFile = await PIXI.Assets.load({src: '../resources/blocks.json', loader: 'loadJson'});
     const blocks = jsonFile.blocks;
     const blockObjects = [];
@@ -47,38 +53,52 @@ async function createBlocks() {
     return blockObjects;
 }
 
-const BLOCKS = await createBlocks(); // List of blocks
+
 
 /* Sort blocks to be in correct rendering order */
-function sortBlocks() {
-    BLOCKS.sort((a, b) => a.rendering_order - b.rendering_order); // Sort by rendering order, descending
+function sortBlocks(blocks) {
+    blocks.sort((a, b) => a.rendering_order - b.rendering_order); // Sort by rendering order, descending
 }
 
 /* Render each block in the list */
-function drawBlocks() {
-    BLOCKS.forEach(block => app.stage.addChild(block));
+function drawBlocks(blocks) {
+    blocks.forEach(block => app.stage.addChild(block));
 }
 
 /* Animate blocks on hover */
-function animateBlocks() {
-    BLOCKS.forEach(block => {
-        const yPos = block.y; // Store original y-coordinate of block
-        block.eventMode = 'static'; // Allow blocks to be animated
+function animateBlock(block) {
+    const yPos = block.y; // Store original y-coordinate of block
+    block.eventMode = 'static'; // Allow blocks to be animated
 
-        if (block.hasSkyAccess) { // Sky access means that no blocks are above the block
-            block.addEventListener('pointerenter', () => {
-                createjs.Tween.get(block).to({y: yPos - (block.height / 10)}, 150, createjs.Ease.sineInOut);
-            });
-            block.addEventListener('pointerleave', () => {
-                createjs.Tween.get(block).to({y: yPos}, 150, createjs.Ease.sineInOut);
-            });
-        }
-    })
+    if (block.hasSkyAccess) { // Sky access means that no blocks are above the block
+        block.addEventListener('pointerenter', () => {
+            createjs.Tween.get(block).to({y: yPos - (block.height / 10)}, 150, createjs.Ease.sineInOut);
+        });
+        block.addEventListener('pointerleave', () => {
+            createjs.Tween.get(block).to({y: yPos}, 150, createjs.Ease.sineInOut);
+        });
+        block.addEventListener('click', () => {
+            createjs.Tween.get(block).to({y: yPos}, 150, createjs.Ease.sineInOut); // Reset block to original position
+            block.hasSkyAccess = false;
+            block.eventMode = 'none';
+            const newBlock = new Block(block.xPos, block.yPos, block.zPos + 1, block.texture, true)
+            addNewBlock(newBlock);
+        });
+    }
+}
+
+function addNewBlock(newBlock) {
+    app.stage.addChild(newBlock);
+    animateBlock(newBlock);
 }
 
 /* Main logic */
 (async () => {
-    sortBlocks();
-    drawBlocks();
-    animateBlocks();
+    const blocks = await readBlocks(); // List of blocks
+    sortBlocks(blocks);
+    drawBlocks(blocks)
+    blocks.forEach(block => animateBlock(block));
+
+    app.ticker.add(() => {
+    });
 })();
