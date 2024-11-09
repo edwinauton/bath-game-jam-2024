@@ -43,17 +43,18 @@ async function readBlocks() {
     for (const block of blocks) {
         const coords = {'x': block.x, 'y': block.y, 'z': block.z + 1};
         const texture = await PIXI.Assets.load(`../resources/assets/${block.texture}`);
-
-        if (blocks.some(obj => Object.keys(coords).every(key => obj[key] === coords[key]))) {  // Use 2d array to tore boolean of whether spot is taken?
-            blockObjects.push(new Block(block.x, block.y, block.z, texture, false));
+        if (block.hasOwnProperty('hasSkyAccess ')) {
+            blockObjects.push(new Block(block.x, block.y, block.z, texture, block.hasSkyAccess ));
         } else {
-            blockObjects.push(new Block(block.x, block.y, block.z, texture, true));
+            if (blocks.some(obj => Object.keys(coords).every(key => obj[key] === coords[key]))) {  // Use 2d array to tore boolean of whether spot is taken?
+                blockObjects.push(new Block(block.x, block.y, block.z, texture, false));
+            } else {
+                blockObjects.push(new Block(block.x, block.y, block.z, texture, true));
+            }
         }
     }
     return blockObjects;
 }
-
-
 
 /* Sort blocks to be in correct rendering order */
 function sortBlocks(blocks) {
@@ -79,8 +80,8 @@ function animateBlock(block) {
         });
         block.addEventListener('click', () => {
             createjs.Tween.get(block).to({y: yPos}, 150, createjs.Ease.sineInOut); // Reset block to original position
+            block.eventMode = 'none' // Stop animations
             block.hasSkyAccess = false;
-            block.eventMode = 'none';
             const newBlock = new Block(block.xPos, block.yPos, block.zPos + 1, block.texture, true)
             addNewBlock(newBlock);
         });
