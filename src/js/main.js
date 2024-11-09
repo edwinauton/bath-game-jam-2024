@@ -18,6 +18,7 @@ class Block extends PIXI.Sprite {
     xRelative;
     yRelative;
     zRelative;
+    staticY;
 
     constructor(x, y, z, texture, hasSkyAccess) {
         super({texture: texture});
@@ -28,25 +29,25 @@ class Block extends PIXI.Sprite {
         const absoluteCoords = relativeToAbsolute(x, y, z, this.width, this.height);
         this.x = absoluteCoords.x
         this.y = absoluteCoords.y
+        this.staticY = this.y // Store y-coordinates when not animated
 
         this.hasSkyAccess = hasSkyAccess;
         this.rendering_order = z * this.height;  // Calculate absolute position of bottom of sprite
     }
 
     animate() {
-        const originalY = this.y; // Store original y-coordinate of block
         super.eventMode = 'static'; // Allow blocks to be animated
 
         if (this.hasSkyAccess) { // Sky access means that no blocks are above the block
             this.addEventListener('pointerenter', () => {
-                createjs.Tween.get(this).to({y: originalY - (this.height / 10)}, 150, createjs.Ease.sineInOut);
+                createjs.Tween.get(this).to({y: this.staticY - (this.height / 10)}, 150, createjs.Ease.sineInOut);
             });
             this.addEventListener('pointerleave', () => {
-                createjs.Tween.get(this).to({y: originalY}, 150, createjs.Ease.sineInOut);
+                createjs.Tween.get(this).to({y: this.staticY}, 150, createjs.Ease.sineInOut);
             });
             this.addEventListener('click', () => {
-                createjs.Tween.get(this).to({y: originalY}, 150, createjs.Ease.sineInOut); // Reset block to original position
-                eventEmitter.emit('movePlayer', this.x, (originalY - this.height / 2))
+                createjs.Tween.get(this).to({y: this.staticY}, 150, createjs.Ease.sineInOut); // Reset block to original position
+                eventEmitter.emit('movePlayer', this.x, (this.staticY - this.height / 2))
                 console.log(this.getAbsolutePosition())
                 console.log(this.getRelativePosition())
             });
@@ -54,7 +55,7 @@ class Block extends PIXI.Sprite {
     }
 
     getAbsolutePosition() {
-        return {x: this.x, y: this.y};
+        return {x: this.x, y: this.staticY};
     }
 
     getRelativePosition() {
