@@ -2,10 +2,14 @@
 const app = new PIXI.Application();
 await app.init({background: '#FFFFFF', resizeTo: window});
 document.body.appendChild(app.canvas);
-
 const eventEmitter = new PIXI.EventEmitter();
 
-/* Parent class for Block and Player with shared fields and methods */
+/**
+ *  @param {Number} x               grid x-coordinate for the sprite
+ *  @param {Number} y               grid y-coordinate for the sprite
+ *  @param {Number} z               grid z-coordinate for the sprite
+ *  @param {Texture} texture        texture asset to be rendered for the sprite
+ *  */
 class GameJamSprite extends PIXI.Sprite {
     renderingOrder
     gridX;
@@ -14,16 +18,18 @@ class GameJamSprite extends PIXI.Sprite {
 
     constructor(x, y, z, texture) {
         super({texture: texture});
+        this.anchor.set(0.5);
+
         this.gridX = x;
         this.gridY = y;
         this.gridZ = z;
-
-        this.gridToAbsolute(x, y, z)
-        this.updateRenderingOrder()
+        this.gridToAbsolute(x, y, z);
+        this.updateRenderingOrder();
     }
 
+    /* Convert from grid coordinates to pixel coordinates */
     gridToAbsolute(x, y, z = 1) {
-        const xCentre = app.screen.width / 2 - this.width / 2;  // Centre horizontally on-screen
+        const xCentre = app.screen.width / 2;  // Centre horizontally on-screen
         this.x = (0.50 * x * this.width) - (0.50 * y * this.height) + xCentre;
 
         const yAlign = app.screen.height / 3;  // Align vertically on-screen
@@ -33,12 +39,54 @@ class GameJamSprite extends PIXI.Sprite {
         return {x: this.x, y: this.y};
     }
 
+    /* Recalculate rendering order */
     updateRenderingOrder() {
         this.renderingOrder = this.gridX + this.gridY + this.gridZ
     }
 
+    /* Shortcut to app.stage.addChild(this) */
     render() {
         app.stage.addChild(this);
+    }
+
+    /* Fade in to alpha = 1 */
+    fadeIn(sprite = this) {
+        app.stage.addChild(sprite);
+        createjs.Tween.get(sprite)
+            .to({alpha: 1}, 100, createjs.Ease.sineInOut); // Fade in
+    }
+
+    /* Fade out to alpha = 0 */
+    fadeOut(sprite = this) {
+        createjs.Tween.get(sprite)
+            .to({alpha: 0}, 100, createjs.Ease.sineInOut) // Fade out
+            .call(() => app.stage.removeChild(sprite)); // Remove item label
+    }
+
+    /* Shrink to size = 0 */
+    shrinkOut(sprite = this) {
+        createjs.Tween.get(sprite.scale)
+            .to({x: 0, y: 0}, 250, createjs.Ease.sineInOut) // Fade out
+            .call(() => app.stage.removeChild(sprite)); // Remove item label
+    }
+
+    /* Hovering animation */
+    hover() {
+        createjs.Tween.get(this)
+            .to({y: this.staticY - (this.height / 10)}, 150, createjs.Ease.sineInOut);
+    }
+
+    /* Sinking animation */
+    sink() {
+        createjs.Tween.get(this)
+            .to({y: this.staticY}, 150, createjs.Ease.sineInOut);
+    }
+
+    /* Looping bouncing animation */
+    bounce() {
+        createjs.Tween.get(this, {loop: true}) // Loop animation
+            .to({y: this.y - (this.height / 10)}, 1000, createjs.Ease.sineInOut)
+            .to({y: this.y}, 1000, createjs.Ease.sineInOut);
     }
 }
 
@@ -62,13 +110,13 @@ class Block extends GameJamSprite {
 
         if (!this.hasBlockAbove) {
             this.addEventListener('pointerenter', () => {
-                createjs.Tween.get(this).to({y: this.staticY - (this.height / 10)}, 150, createjs.Ease.sineInOut);
+                this.hover();
             });
             this.addEventListener('pointerleave', () => {
-                createjs.Tween.get(this).to({y: this.staticY}, 150, createjs.Ease.sineInOut);
+                this.sink()
             });
             this.addEventListener('click', () => {
-                createjs.Tween.get(this).to({y: this.staticY}, 150, createjs.Ease.sineInOut); // Reset block to original position
+                this.sink();
                 eventEmitter.emit('movePlayer', this);
             });
         }
@@ -104,7 +152,7 @@ class Player extends GameJamSprite {
     /* Moves the player from their current position to a new block in calculated steps */
     moveTo(block) { // TODO: Check for z-levels
         if (!block.hasBlockAbove && block.gridZ === this.gridZ - 1) { // Only run for accessible blocks on this level
-            createjs.Tween.removeTweens(this); // Stops ongoing Tweens
+            createjs.Tween.removeTweens(this); // Stops ongoing Tweens for the player
 
             const animateStep = () => {
                 let moved = false;
@@ -150,10 +198,7 @@ class Interactable extends GameJamSprite {
     /* Looping hovering animation */
     animate() {
         this.eventMode = 'static'; // Allow animation
-
-        createjs.Tween.get(this, {loop: true}) // Loop animation
-            .to({y: this.y - (this.height / 10)}, 1000, createjs.Ease.sineInOut)
-            .to({y: this.y}, 1000, createjs.Ease.sineInOut);
+        this.bounce();
     }
 
     /* Add hover and click functionality */
@@ -161,15 +206,15 @@ class Interactable extends GameJamSprite {
         const label = this.createLabel()
 
         this.addEventListener('pointerenter', () => {
-            app.stage.addChild(label); // Display item label
+            this.fadeIn(label);
         });
         this.addEventListener('pointerleave', () => {
-            app.stage.removeChild(label); // Remove item label
+            this.fadeOut(label);
         });
         this.addEventListener('click', () => {
             if (this.hasAdjacentPlayer()) {
-                app.stage.removeChild(label); // Remove item label
-                app.stage.removeChild(this); // Remove interactable
+                this.fadeOut(label)
+                this.shrinkOut()
                 console.log(`You collected a ${this.label}!`); // TODO: Add functionality
             }
         });
@@ -194,8 +239,6 @@ class Interactable extends GameJamSprite {
 
     createLabel() {
         const rectangle = new PIXI.Graphics();
-        rectangle.x = this.x - this.width;
-        rectangle.y = this.y - 30;
         const text = new PIXI.Text({
             text: this.label, style: {
                 fontFamily: "Verdana, Geneva, sans-serif", fontSize: 16, fill: 0xFFFFFF
@@ -206,20 +249,23 @@ class Interactable extends GameJamSprite {
         const padding = 7;
         const width = text.width + 2 * padding;
         const height = text.height + 2 * padding;
-        rectangle.roundRect(0, 0, width, height, 10).fill('0x000000A8');
 
         text.x = width / 2;
         text.y = height / 2;
+
+        rectangle.x = this.x - width / 2;
+        rectangle.y = this.y - 45;
+        rectangle.roundRect(0, 0, width, height, 10).fill('0x000000A8');
         rectangle.addChild(text);
+        rectangle.alpha = 0;
 
         return rectangle;
     }
 }
 
-/* Read blocks from JSON file and make list of Block objects */
-async function createBlocks(scene) {
-    const jsonFile = await PIXI.Assets.load({src: '../resources/blocks.json', loader: 'loadJson'});
-    const blocks = jsonFile[scene];
+/* Read in blocks and return a list to instantiate */
+async function readBlocks(scene) {
+    const blocks = await readJSON('blocks.json', scene)
 
     const blockObjects = [];
     for (const block of blocks) {
@@ -230,9 +276,9 @@ async function createBlocks(scene) {
 }
 
 /* Add given new blocks to existing blocks and recalculate renderingOrder, hasBlockAbove etc. */
-function addNewBlocks(newBlocks) { // TODO: Generalise to all sprites, and run every time a player moves, etc.
+function addBlocks(blocks) { // TODO: Generalise to all sprites, and run every time a player moves, etc.
     let existingBlocks = app.stage.children.filter(child => child instanceof Block);
-    const allBlocks = existingBlocks.concat(newBlocks);
+    const allBlocks = existingBlocks.concat(blocks);
     allBlocks.sort((a, b) => a.renderingOrder - b.renderingOrder); // Sort by descending rendering order
     app.stage.children.forEach(child => child.remove());
 
@@ -243,20 +289,17 @@ function addNewBlocks(newBlocks) { // TODO: Generalise to all sprites, and run e
     })
 }
 
-/* Read player from JSON file and instantiate it */
+/* Read in player and instantiate it */
 async function createPlayer(playerIndex) { // TODO: Player selection?
-    const jsonFile = await PIXI.Assets.load({src: '../resources/players.json', loader: 'loadJson'});
-    const player = jsonFile.players[playerIndex];
-
+    const player = (await readJSON('players.json', 'players'))[0];
     const texture = await PIXI.Assets.load(`../resources/assets/${player.texture}`);
     const playerObject = new Player(9, 9, 1, texture);
     playerObject.render();
 }
 
-/* Read interactables from JSON file and instantiate them */
+/* Read in interactables and instantiate them */
 async function createInteractables(scene) {
-    const jsonFile = await PIXI.Assets.load({src: '../resources/interactables.json', loader: 'loadJson'});
-    const interactables = jsonFile[scene];
+    const interactables = await readJSON('interactables.json', scene);
 
     for (const interactable of interactables) {
         const texture = await PIXI.Assets.load(`../resources/assets/${interactable.texture}`);
@@ -266,10 +309,15 @@ async function createInteractables(scene) {
     }
 }
 
-/* Main logic */
+/* Read given JSON file and return data from given array */
+async function readJSON(fileName, array){
+    const jsonFile = await PIXI.Assets.load({src: `../resources/${fileName}`, loader: 'loadJson'});
+    return jsonFile[array];
+}
+
+/* ---------- Main Logic ---------- */
 (async () => {
-    const testLevel = await createBlocks('test_screen');
-    addNewBlocks(testLevel);
+    addBlocks(await readBlocks('test_screen'));
     await createInteractables('test_screen');
     await createPlayer(0);
 })();
