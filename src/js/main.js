@@ -3,82 +3,175 @@ const app = new PIXI.Application();
 await app.init({background: '#FFFFFF', resizeTo: window});
 document.body.appendChild(app.canvas);
 
-/**
- *  @param {Number} x               relative x-coordinate for the block
- *  @param {Number} y               relative y-coordinate for the block
- *  @param {Number} z               relative z-coordinate for the block
- *  @param {Texture} texture        image texture to be rendered for the block
- *  @param {Boolean} hasSkyAccess   whether or not the block has sky access (i.e. no blocks above it)
- *  */
-class Block extends PIXI.Sprite {
-    rendering_order;
-    hasSkyAccess;
+const eventEmitter = new PIXI.EventEmitter();
 
-    constructor(x, y, z, texture, hasSkyAccess) {
+/* Parent class for Block and Player with shared fields and methods */
+class GameJamSprite extends PIXI.Sprite {
+    renderingOrder
+    gridX;
+    gridY;
+    gridZ;
+
+    constructor(x, y, z, texture) {
         super({texture: texture});
+        this.gridX = x;
+        this.gridY = y;
+        this.gridZ = z;
 
-        const xCentre = app.screen.width / 2 - super.width / 2;  // Centre horizontally on-screen
-        super.x = (0.50 * x * super.width) - (0.50 * y * super.height) + xCentre;
+        this.gridToAbsolute(x, y, z)
+        this.updateRenderingOrder()
+    }
+
+    gridToAbsolute(x, y, z = 1) {
+        const xCentre = app.screen.width / 2 - this.width / 2;  // Centre horizontally on-screen
+        this.x = (0.50 * x * this.width) - (0.50 * y * this.height) + xCentre;
+
         const yAlign = app.screen.height / 3;  // Align vertically on-screen
-        const zOffset = z * super.height / 2;
-        super.y = (0.25 * x * super.width) + (0.25 * y * super.height) + yAlign - zOffset;
+        const zOffset = z * this.height / 2;
+        this.y = (0.25 * x * this.width) + (0.25 * y * this.height) + yAlign - zOffset;
 
-        this.hasSkyAccess = hasSkyAccess;
-        this.rendering_order = z * super.height;  // Calculate absolute position of bottom of sprite
+        return {x: this.x, y: this.y};
+    }
+
+    updateRenderingOrder() {
+        this.renderingOrder = this.gridX + this.gridY + this.gridZ
+    }
+
+    render() {
+        app.stage.addChild(this);
+    }
+}
+
+/**
+ *  @param {Number} x               grid x-coordinate for the block
+ *  @param {Number} y               grid y-coordinate for the block
+ *  @param {Number} z               grid z-coordinate for the block
+ *  @param {Texture} texture        texture asset to be rendered for the block
+ *  */
+class Block extends GameJamSprite {
+    staticY;
+
+    constructor(x, y, z, texture) {
+        super(x, y, z, texture);
+        this.staticY = this.y;
+    }
+
+    /* Animations to be run on the block when hovered over, clicked, etc.*/
+    animate() {
+        this.eventMode = 'static'; // Allow blocks to be animated
+
+        if (!this.hasBlockAbove) {
+            this.addEventListener('pointerenter', () => {
+                createjs.Tween.get(this).to({y: this.staticY - (this.height / 10)}, 150, createjs.Ease.sineInOut);
+            });
+            this.addEventListener('pointerleave', () => {
+                createjs.Tween.get(this).to({y: this.staticY}, 150, createjs.Ease.sineInOut);
+            });
+            this.addEventListener('click', () => {
+                createjs.Tween.get(this).to({y: this.staticY}, 150, createjs.Ease.sineInOut); // Reset block to original position
+                eventEmitter.emit('movePlayer', this);
+            });
+        }
+    }
+
+    /* Check if there is a block immediately above this one */
+    checkBlockAbove(blocks) {
+        const blockMap = new Map();
+        blocks.forEach(block => {
+            const key = `${block.gridX},${block.gridY},${block.gridZ}`;  // Create keys to add to map
+            blockMap.set(key, block); // Create map of key (x,y,z) -> value (Block)
+        });
+
+        const key = `${this.gridX},${this.gridY},${this.gridZ + 1}`; // Create key to search in map
+        this.hasBlockAbove = blockMap.has(key);
+    }
+}
+
+/**
+ *  @param {Number} x               grid x-coordinate spawn for the player
+ *  @param {Number} y               grid y-coordinate spawn for the player
+ *  @param {Number} z               grid z-coordinate spawn for the player
+ *  @param {Texture} texture        texture asset to be rendered for the player
+ *  */
+class Player extends GameJamSprite {
+    constructor(x, y, z, texture) {
+        super(x, y, z, texture);
+
+        this.renderingOrder = Infinity; // Always on top
+        eventEmitter.on('movePlayer', this.moveTo.bind(this));  // Run 'moveTo' when 'movePlayer' event triggers
+    }
+
+    /* Moves the player from their current position to a new block in calculated steps */ // TODO: Check for z-levels
+    moveTo(block) {
+        if (!block.hasBlockAbove && block.gridZ === this.gridZ - 1) { // Only run for accessible blocks on this level
+            createjs.Tween.removeTweens(this); // Stops ongoing Tweens
+
+            const animateStep = () => {
+                let moved = false;
+
+                if (this.gridX !== block.gridX) {
+                    this.gridX += (this.gridX < block.gridX) ? 1 : -1; // 1 if true, -1 if false
+                    moved = true;
+                } else if (this.gridY !== block.gridX) {
+                    this.gridY += (this.gridY < block.gridY) ? 1 : -1; // 1 if true, -1 if false
+                    moved = true;
+                }
+
+                if (moved) {  // Check if anything has been changed
+                    const absolute = this.gridToAbsolute(this.gridX, this.gridY);
+                    this.updateRenderingOrder()
+                    createjs.Tween.get(this)
+                        .to({x: absolute.x, y: absolute.y}, 150, createjs.Ease.sineInOut)
+                        .call(animateStep);  // Loop animateStep
+                }
+            }
+            animateStep();
+        }
     }
 }
 
 /* Read blocks from JSON file and make list of Block objects */
-async function createBlocks() {
+async function createBlocks(scene) {
     const jsonFile = await PIXI.Assets.load({src: '../resources/blocks.json', loader: 'loadJson'});
-    const blocks = jsonFile.blocks;
+    const blocks = jsonFile[scene]
+
     const blockObjects = [];
-
     for (const block of blocks) {
-        const coords = {'x': block.x, 'y': block.y, 'z': block.z + 1};
         const texture = await PIXI.Assets.load(`../resources/assets/${block.texture}`);
-
-        if (blocks.some(obj => Object.keys(coords).every(key => obj[key] === coords[key]))) {  // Use 2d array to tore boolean of whether spot is taken?
-            blockObjects.push(new Block(block.x, block.y, block.z, texture, false));
-        } else {
-            blockObjects.push(new Block(block.x, block.y, block.z, texture, true));
-        }
+        blockObjects.push(new Block(block.x, block.y, block.z, texture));
     }
     return blockObjects;
 }
 
-const BLOCKS = await createBlocks(); // List of blocks
+/* Add given new blocks to existing blocks and recalculate renderingOrder, hasBlockAbove etc. */
+function addNewBlocks(newBlocks) {
+    let existingBlocks = app.stage.children.filter(child => child instanceof Block);
+    const allBlocks = existingBlocks.concat(newBlocks)
+    allBlocks.sort((a, b) => a.renderingOrder - b.renderingOrder); // Sort by descending rendering order
+    clearStage();
 
-/* Sort blocks to be in correct rendering order */
-function sortBlocks() {
-    BLOCKS.sort((a, b) => a.rendering_order - b.rendering_order); // Sort by rendering order, descending
-}
-
-/* Render each block in the list */
-function drawBlocks() {
-    BLOCKS.forEach(block => app.stage.addChild(block));
-}
-
-/* Animate blocks on hover */
-function animateBlocks() {
-    BLOCKS.forEach(block => {
-        const yPos = block.y; // Store original y-coordinate of block
-        block.eventMode = 'static'; // Allow blocks to be animated
-
-        if (block.hasSkyAccess) { // Sky access means that no blocks are above the block
-            block.addEventListener('pointerenter', () => {
-                createjs.Tween.get(block).to({y: yPos - (block.height / 10)}, 150, createjs.Ease.sineInOut);
-            });
-            block.addEventListener('pointerleave', () => {
-                createjs.Tween.get(block).to({y: yPos}, 150, createjs.Ease.sineInOut);
-            });
-        }
+    allBlocks.forEach(block => {
+        block.render();
+        block.checkBlockAbove(allBlocks);
+        block.animate();
     })
+}
+
+/* Remove all children from the stage */
+function clearStage() {
+    app.stage.children.forEach(child => child.remove());
+}
+
+/* Create player */ // TODO: Player selection?
+async function createPlayer() {
+    const texture = await PIXI.Assets.load(`../resources/assets/blue_slab.png`);
+    const player = new Player(9, 9, 1, texture)
+    player.render();
 }
 
 /* Main logic */
 (async () => {
-    sortBlocks();
-    drawBlocks();
-    animateBlocks();
+    const testLevel = await createBlocks('test_screen')
+    addNewBlocks(testLevel);
+    await createPlayer();
 })();
