@@ -107,9 +107,6 @@ class Player extends GameJamSprite {
             createjs.Tween.removeTweens(this); // Stops ongoing Tweens
 
             const animateStep = () => {
-                if (this.checkAdjacentInteractables()) {
-                    eventEmitter.emit('interact', this);
-                }
                 let moved = false;
 
                 if (this.gridX !== block.gridX) {
@@ -131,28 +128,13 @@ class Player extends GameJamSprite {
             animateStep();
         }
     }
-
-    checkAdjacentInteractables() {
-        const blocks = app.stage.children.filter(child => child instanceof GameJamSprite);
-        const spriteMap = new Map();
-        blocks.filter(sprite => sprite instanceof Interactable).forEach(sprite => {
-            const key = `${sprite.gridX},${sprite.gridY},${sprite.gridZ}`;  // Create keys to add to map
-            spriteMap.set(key, sprite); // Create map of key (x,y,z) -> value (Block)
-        });
-
-        const key1 = `${this.gridX + 1},${this.gridY},${this.gridZ}`; // Create key to search in map
-        const key2 = `${this.gridX - 1},${this.gridY},${this.gridZ}`; // Create key to search in map
-        const key3 = `${this.gridX},${this.gridY + 1},${this.gridZ}`; // Create key to search in map
-        const key4 = `${this.gridX},${this.gridY - 1},${this.gridZ}`; // Create key to search in map
-        return spriteMap.has(key1) || spriteMap.has(key2) || spriteMap.has(key3) || spriteMap.has(key4);
-    }
 }
 
 class Interactable extends GameJamSprite {
     constructor(x, y, z, texture) {
         super(x, y, z, texture);
 
-        eventEmitter.on('interact', this.interact.bind(this));
+        this.addInteractivity()
     }
 
     animate() {
@@ -163,8 +145,30 @@ class Interactable extends GameJamSprite {
             .to({y: this.y}, 1000, createjs.Ease.sineInOut);
     }
 
-    interact() {
-        console.log("Interacted!"); // TODO: Add functionality
+    addInteractivity() {
+        this.addEventListener('pointerenter', () => {
+            console.log("You are hovering over the interactable"); // TODO: Add functionality
+        });
+        this.addEventListener('click', () => {
+            if (this.hasAdjacentPlayer()) {
+                console.log("Interacted!"); // TODO: Add functionality
+            }
+        });
+    }
+
+    hasAdjacentPlayer() {
+        const players = app.stage.children.filter(child => child instanceof Player);
+        const playerMap = new Map();
+        players.forEach(player => {
+            const key = `${player.gridX},${player.gridY},${player.gridZ}`;  // Create keys to add to map
+            playerMap.set(key, player); // Create map of key (x,y,z) -> value (Player)
+        });
+
+        const key1 = `${this.gridX + 1},${this.gridY},${this.gridZ}`; // Create key to search in map
+        const key2 = `${this.gridX - 1},${this.gridY},${this.gridZ}`; // Create key to search in map
+        const key3 = `${this.gridX},${this.gridY + 1},${this.gridZ}`; // Create key to search in map
+        const key4 = `${this.gridX},${this.gridY - 1},${this.gridZ}`; // Create key to search in map
+        return (playerMap.has(key1) || playerMap.has(key2) || playerMap.has(key3) || playerMap.has(key4));
     }
 }
 
