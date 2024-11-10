@@ -160,10 +160,11 @@ class Player extends GameJamSprite {
 
                 if (moved) {  // Check if anything has been changed
                     const absolute = this.gridToAbsolute(this.gridX, this.gridY);
-                    tick();
+                    this.updateRenderingOrder();
                     createjs.Tween.get(this)
                         .to({x: absolute.x, y: absolute.y}, 150, createjs.Ease.sineInOut)
                         .call(animateStep);  // Continue loop
+                    tick();
                 }
             }
             animateStep(); // Start loop
