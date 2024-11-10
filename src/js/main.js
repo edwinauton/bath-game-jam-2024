@@ -23,7 +23,7 @@ class GameJamSprite extends PIXI.Sprite {
         this.gridX = x;
         this.gridY = y;
         this.gridZ = z;
-        this.zIndex = this.gridX + this.gridY + this.gridZ
+        this.updateRenderingOrder();
     }
 
     /* Convert from grid coordinates to pixel coordinates */
@@ -36,6 +36,10 @@ class GameJamSprite extends PIXI.Sprite {
         this.y = (0.25 * x * this.width) + (0.25 * y * this.height) + yAlign - zOffset;
 
         return {x: this.x, y: this.y};
+    }
+
+    updateRenderingOrder() {
+        this.zIndex = this.gridX + this.gridY + this.gridZ;
     }
 
     /* Shortcut to app.stage.addChild(this) */
@@ -102,30 +106,26 @@ class Block extends GameJamSprite {
     animate() {
         this.eventMode = 'static'; // Allow blocks to be animated
 
-        if (!this.hasBlockAbove) {
-            this.addEventListener('pointerenter', () => {
+        this.addEventListener('pointerenter', () => {
+            if (!this.hasBlockAbove) {
                 this.hover();
-            });
-            this.addEventListener('pointerleave', () => {
-                this.sink()
-            });
-            this.addEventListener('click', () => {
-                this.sink();
+            }
+        });
+        this.addEventListener('pointerleave', () => {
+            this.sink();
+        });
+        this.addEventListener('click', () => {
+            this.sink();
+            if (!this.hasBlockAbove) {
                 eventEmitter.emit('movePlayer', this);
-            });
-        }
+            }
+        });
     }
 
-    /* Check if there is a block immediately above this one */
-    checkBlockAbove(blocks) {
-        const blockMap = new Map();
-        blocks.forEach(block => {
-            const key = `${block.gridX},${block.gridY},${block.gridZ}`;  // Create keys to add to map
-            blockMap.set(key, block); // Create map of key (x,y,z) -> value (Block)
-        });
-
-        const key = `${this.gridX},${this.gridY},${this.gridZ + 1}`; // Create key to search in map
-        this.hasBlockAbove = blockMap.has(key);
+    /* Check if there is something immediately above this block */
+    checkAbove(spriteMap) {
+        const aboveKey = `${this.gridX},${this.gridY},${this.gridZ + 1}`; // Create the key for the above block
+        this.hasBlockAbove = spriteMap.has(aboveKey); // Check if the key is in the map
     }
 }
 
@@ -139,12 +139,11 @@ class Player extends GameJamSprite {
     constructor(x, y, z, texture) {
         super(x, y, z, texture);
 
-        this.zIndex = Infinity; // Always on top
         eventEmitter.on('movePlayer', this.moveTo.bind(this));  // Run 'moveTo' when 'movePlayer' event triggers
     }
 
     /* Moves the player from their current position to a new block in calculated steps */
-    moveTo(block) { // TODO: Check for z-levels
+    moveTo(block) { // TODO: Check for z-levels and collisions
         if (!block.hasBlockAbove && block.gridZ === this.gridZ - 1) { // Only run for accessible blocks on this level
             createjs.Tween.removeTweens(this); // Stops ongoing Tweens for the player
 
@@ -161,6 +160,7 @@ class Player extends GameJamSprite {
 
                 if (moved) {  // Check if anything has been changed
                     const absolute = this.gridToAbsolute(this.gridX, this.gridY);
+                    tick();
                     createjs.Tween.get(this)
                         .to({x: absolute.x, y: absolute.y}, 150, createjs.Ease.sineInOut)
                         .call(animateStep);  // Continue loop
@@ -184,8 +184,8 @@ class Interactable extends GameJamSprite {
     constructor(x, y, z, texture, label) {
         super(x, y, z, texture);
 
-        this.label = label
-        this.addInteractivity()
+        this.label = label;
+        this.addInteractivity();
     }
 
     /* Looping hovering animation */
@@ -196,7 +196,7 @@ class Interactable extends GameJamSprite {
 
     /* Add hover and click functionality */
     addInteractivity() {
-        const label = this.createLabel()
+        const label = this.createLabel();
 
         this.addEventListener('pointerenter', () => {
             this.fadeIn(label);
@@ -206,8 +206,8 @@ class Interactable extends GameJamSprite {
         });
         this.addEventListener('click', () => {
             if (this.hasAdjacentPlayer()) {
-                this.fadeOut(label)
-                this.shrinkOut()
+                this.fadeOut(label);
+                this.shrinkOut();
                 console.log(`You collected a ${this.label}!`); // TODO: Add functionality
             }
         });
@@ -258,34 +258,21 @@ class Interactable extends GameJamSprite {
     }
 }
 
-/* Read in blocks and return a list to instantiate */
-async function readBlocks(scene) {
-    const blocks = await readJSON('blocks.json', scene)
+/* Read in blocks and instantiate them */
+async function createBlocks(scene) {
+    const blocks = await readJSON('blocks.json', scene);
 
-    const blockObjects = [];
     for (const block of blocks) {
         const texture = await PIXI.Assets.load(`../resources/assets/${block.texture}`);
-        blockObjects.push(new Block(block.x, block.y, block.z, texture));
+        const blockObject = new Block(block.x, block.y, block.z, texture);
+        blockObject.render();
+        blockObject.animate();
     }
-    return blockObjects;
-}
-
-/* Add given new blocks to existing blocks and recalculate renderingOrder, hasBlockAbove etc. */
-function addBlocks(blocks) { // TODO: Generalise to all sprites, and run every time a player moves, etc.
-    let existingBlocks = app.stage.children.filter(child => child instanceof Block);
-    const allBlocks = existingBlocks.concat(blocks);
-
-    app.stage.children.forEach(child => child.remove());
-    allBlocks.forEach(block => {
-        block.render();
-        block.checkBlockAbove(allBlocks);
-        block.animate();
-    })
 }
 
 /* Read in player and instantiate it */
 async function createPlayer(playerIndex) { // TODO: Player selection?
-    const player = (await readJSON('players.json', 'players'))[0];
+    const player = (await readJSON('players.json', 'players'))[playerIndex];
     const texture = await PIXI.Assets.load(`../resources/assets/${player.texture}`);
     const playerObject = new Player(9, 9, 1, texture);
     playerObject.render();
@@ -304,14 +291,33 @@ async function createInteractables(scene) {
 }
 
 /* Read given JSON file and return data from given array */
-async function readJSON(fileName, array){
+async function readJSON(fileName, array) {
     const jsonFile = await PIXI.Assets.load({src: `../resources/${fileName}`, loader: 'loadJson'});
     return jsonFile[array];
 }
 
 /* ---------- Main Logic ---------- */
 (async () => {
-    addBlocks(await readBlocks('test_screen'));
+    await createBlocks('test_screen');
     await createInteractables('test_screen');
     await createPlayer(0);
+    tick();
 })();
+
+/* Recalculate rendering order and run checkAbove for blocks */
+function tick() {
+    const spriteMap = new Map();
+
+    app.stage.children.forEach(child => {
+        if (child instanceof GameJamSprite) {
+            const key = `${child.gridX},${child.gridY},${child.gridZ}`; // Create key for the sprite
+            spriteMap.set(key, child); // Add key to map
+            child.updateRenderingOrder();
+        }
+    });
+    app.stage.children.forEach(child => {
+        if (child instanceof Block) {
+            child.checkAbove(spriteMap);
+        }
+    });
+}
