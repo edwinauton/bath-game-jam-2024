@@ -107,12 +107,15 @@ class Player extends GameJamSprite {
             createjs.Tween.removeTweens(this); // Stops ongoing Tweens
 
             const animateStep = () => {
+                if (this.checkAdjacentInteractables()) {
+                    eventEmitter.emit('interact', this);
+                }
                 let moved = false;
 
                 if (this.gridX !== block.gridX) {
                     this.gridX += (this.gridX < block.gridX) ? 1 : -1; // 1 if true, -1 if false
                     moved = true;
-                } else if (this.gridY !== block.gridX) {
+                } else if (this.gridY !== block.gridY) {
                     this.gridY += (this.gridY < block.gridY) ? 1 : -1; // 1 if true, -1 if false
                     moved = true;
                 }
@@ -127,6 +130,41 @@ class Player extends GameJamSprite {
             }
             animateStep();
         }
+    }
+
+    checkAdjacentInteractables() {
+        const blocks = app.stage.children.filter(child => child instanceof GameJamSprite);
+        const spriteMap = new Map();
+        blocks.filter(sprite => sprite instanceof Interactable).forEach(sprite => {
+            const key = `${sprite.gridX},${sprite.gridY},${sprite.gridZ}`;  // Create keys to add to map
+            spriteMap.set(key, sprite); // Create map of key (x,y,z) -> value (Block)
+        });
+
+        const key1 = `${this.gridX + 1},${this.gridY},${this.gridZ}`; // Create key to search in map
+        const key2 = `${this.gridX - 1},${this.gridY},${this.gridZ}`; // Create key to search in map
+        const key3 = `${this.gridX},${this.gridY + 1},${this.gridZ}`; // Create key to search in map
+        const key4 = `${this.gridX},${this.gridY - 1},${this.gridZ}`; // Create key to search in map
+        return spriteMap.has(key1) || spriteMap.has(key2) || spriteMap.has(key3) || spriteMap.has(key4);
+    }
+}
+
+class Interactable extends GameJamSprite {
+    constructor(x, y, z, texture) {
+        super(x, y, z, texture);
+
+        eventEmitter.on('interact', this.interact.bind(this));
+    }
+
+    animate() {
+        this.eventMode = 'static'; // Allow animation
+
+        createjs.Tween.get(this, {loop: true}) // Loop animation
+            .to({y: this.y - (this.height / 10)}, 1000, createjs.Ease.sineInOut)
+            .to({y: this.y}, 1000, createjs.Ease.sineInOut);
+    }
+
+    interact() {
+        console.log("Interacted!"); // TODO: Add functionality
     }
 }
 
@@ -169,9 +207,18 @@ async function createPlayer() {
     player.render();
 }
 
+/* Create interactable */
+async function createInteractable() {
+    const texture = await PIXI.Assets.load(`../resources/assets/blue_slab.png`);
+    const interactable = new Interactable(19, 19, 1, texture)
+    interactable.render();
+    interactable.animate();
+}
+
 /* Main logic */
 (async () => {
     const testLevel = await createBlocks('test_screen')
     addNewBlocks(testLevel);
     await createPlayer();
+    await createInteractable();
 })();
