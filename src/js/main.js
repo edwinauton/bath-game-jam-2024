@@ -56,7 +56,7 @@ class Block extends GameJamSprite {
         this.staticY = this.y;
     }
 
-    /* Animations to be run on the block when hovered over, clicked, etc.*/
+    /* Add hover and click animations */
     animate() {
         this.eventMode = 'static'; // Allow blocks to be animated
 
@@ -101,8 +101,8 @@ class Player extends GameJamSprite {
         eventEmitter.on('movePlayer', this.moveTo.bind(this));  // Run 'moveTo' when 'movePlayer' event triggers
     }
 
-    /* Moves the player from their current position to a new block in calculated steps */ // TODO: Check for z-levels
-    moveTo(block) {
+    /* Moves the player from their current position to a new block in calculated steps */
+    moveTo(block) { // TODO: Check for z-levels
         if (!block.hasBlockAbove && block.gridZ === this.gridZ - 1) { // Only run for accessible blocks on this level
             createjs.Tween.removeTweens(this); // Stops ongoing Tweens
 
@@ -122,21 +122,32 @@ class Player extends GameJamSprite {
                     this.updateRenderingOrder()
                     createjs.Tween.get(this)
                         .to({x: absolute.x, y: absolute.y}, 150, createjs.Ease.sineInOut)
-                        .call(animateStep);  // Loop animateStep
+                        .call(animateStep);  // Continue loop
                 }
             }
-            animateStep();
+            animateStep(); // Start loop
         }
     }
 }
 
+/**
+ *  @param {Number} x               grid x-coordinate for the interactable
+ *  @param {Number} y               grid y-coordinate for the interactable
+ *  @param {Number} z               grid z-coordinate for the interactable
+ *  @param {Texture} texture        texture asset to be rendered for the interactable
+ *  @param {String} label           label to be displayed above the interactable when hovered over
+ *  */
 class Interactable extends GameJamSprite {
-    constructor(x, y, z, texture) {
+    label;
+
+    constructor(x, y, z, texture, label) {
         super(x, y, z, texture);
 
+        this.label = label
         this.addInteractivity()
     }
 
+    /* Looping hovering animation */
     animate() {
         this.eventMode = 'static'; // Allow animation
 
@@ -145,17 +156,26 @@ class Interactable extends GameJamSprite {
             .to({y: this.y}, 1000, createjs.Ease.sineInOut);
     }
 
+    /* Add hover and click functionality */
     addInteractivity() {
+        const label = new Label(this);
+
         this.addEventListener('pointerenter', () => {
-            console.log("You are hovering over the interactable"); // TODO: Add functionality
+            app.stage.addChild(label); // Display item label
+        });
+        this.addEventListener('pointerleave', () => {
+            app.stage.removeChild(label); // Remove item label
         });
         this.addEventListener('click', () => {
             if (this.hasAdjacentPlayer()) {
-                console.log("Interacted!"); // TODO: Add functionality
+                app.stage.removeChild(label); // Remove item label
+                app.stage.removeChild(this); // Remove interactable
+                console.log(`You collected a ${this.label}!`); // TODO: Add functionality
             }
         });
     }
 
+    /* Check for a player in any adjacent tile */
     hasAdjacentPlayer() {
         const players = app.stage.children.filter(child => child instanceof Player);
         const playerMap = new Map();
@@ -164,6 +184,7 @@ class Interactable extends GameJamSprite {
             playerMap.set(key, player); // Create map of key (x,y,z) -> value (Player)
         });
 
+        // Check all four adjacent tiles to this one
         const key1 = `${this.gridX + 1},${this.gridY},${this.gridZ}`; // Create key to search in map
         const key2 = `${this.gridX - 1},${this.gridY},${this.gridZ}`; // Create key to search in map
         const key3 = `${this.gridX},${this.gridY + 1},${this.gridZ}`; // Create key to search in map
@@ -172,10 +193,39 @@ class Interactable extends GameJamSprite {
     }
 }
 
+/**
+ *  @param {Interactable} interactable  interactable the label belongs to
+ *  */
+class Label extends PIXI.Graphics {
+    constructor(interactable) {
+        super();
+
+        this.x = interactable.x - interactable.width;
+        this.y = interactable.y - 30;
+
+        const text = new PIXI.Text({
+            text: interactable.label, style: {
+                fontFamily: "Verdana, Geneva, sans-serif", fontSize: 16, fill: 0xFFFFFF
+            }
+        });
+        text.anchor.set(0.5);
+
+        const padding = 7;
+        const width = text.width + 2 * padding;
+        const height = text.height + 2 * padding;
+
+        this.roundRect(0, 0, width, height, 10).fill('0x000000A8');
+
+        text.x = width / 2;
+        text.y = height / 2;
+        this.addChild(text);
+    }
+}
+
 /* Read blocks from JSON file and make list of Block objects */
 async function createBlocks(scene) {
     const jsonFile = await PIXI.Assets.load({src: '../resources/blocks.json', loader: 'loadJson'});
-    const blocks = jsonFile[scene]
+    const blocks = jsonFile[scene];
 
     const blockObjects = [];
     for (const block of blocks) {
@@ -190,7 +240,7 @@ function addNewBlocks(newBlocks) { // TODO: Generalise to all sprites, and run e
     let existingBlocks = app.stage.children.filter(child => child instanceof Block);
     const allBlocks = existingBlocks.concat(newBlocks)
     allBlocks.sort((a, b) => a.renderingOrder - b.renderingOrder); // Sort by descending rendering order
-    clearStage();
+    app.stage.children.forEach(child => child.remove());
 
     allBlocks.forEach(block => {
         block.render();
@@ -199,30 +249,33 @@ function addNewBlocks(newBlocks) { // TODO: Generalise to all sprites, and run e
     })
 }
 
-/* Remove all children from the stage */
-function clearStage() {
-    app.stage.children.forEach(child => child.remove());
+/* Read player from JSON file and instantiate it */
+async function createPlayer(playerIndex) { // TODO: Player selection?
+    const jsonFile = await PIXI.Assets.load({src: '../resources/players.json', loader: 'loadJson'});
+    const player = jsonFile.players[playerIndex];
+
+    const texture = await PIXI.Assets.load(`../resources/assets/${player.texture}`);
+    const playerObject = new Player(9, 9, 1, texture)
+    playerObject.render();
 }
 
-/* Create player */ // TODO: Player selection?
-async function createPlayer() {
-    const texture = await PIXI.Assets.load(`../resources/assets/blue_slab.png`);
-    const player = new Player(9, 9, 1, texture)
-    player.render();
-}
+/* Read interactables from JSON file and instantiate them */
+async function createInteractables(scene) {
+    const jsonFile = await PIXI.Assets.load({src: '../resources/interactables.json', loader: 'loadJson'});
+    const interactables = jsonFile[scene];
 
-/* Create interactable */
-async function createInteractable() {
-    const texture = await PIXI.Assets.load(`../resources/assets/blue_slab.png`);
-    const interactable = new Interactable(19, 19, 1, texture)
-    interactable.render();
-    interactable.animate();
+    for (const interactable of interactables) {
+        const texture = await PIXI.Assets.load(`../resources/assets/${interactable.texture}`);
+        const interactableObject = new Interactable(interactable.x, interactable.y, interactable.z, texture, interactable.label);
+        interactableObject.render();
+        interactableObject.animate();
+    }
 }
 
 /* Main logic */
 (async () => {
     const testLevel = await createBlocks('test_screen')
     addNewBlocks(testLevel);
-    await createPlayer();
-    await createInteractable();
+    await createInteractables('test_screen');
+    await createPlayer(0);
 })();
