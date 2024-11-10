@@ -1,0 +1,11 @@
+{
+  "test_screen": [
+    {
+      "x": 18,
+      "y": 18,
+      "z": 1,
+      "texture": "blue_slab.png",
+      "label": "Flashlight"
+    }
+  ]
+}
