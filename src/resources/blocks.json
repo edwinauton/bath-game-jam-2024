@@ -1,5 +1,5 @@
 {
-  "blocks": [
+  "test_screen": [
     {
       "x": 6,
       "y": 19,
@@ -1045,12 +1045,6 @@
       "texture": "gray_block.png"
     },
     {
-      "x": 9,
-      "y": 10,
-      "z": 2,
-      "texture": "blue_block.png"
-    },
-    {
       "x": 2,
       "y": 8,
       "z": 0,
@@ -1636,12 +1630,6 @@
       "x": 14,
       "y": 0,
       "z": 2,
-      "texture": "blue_block.png"
-    },
-    {
-      "x": 9,
-      "y": 10,
-      "z": 1,
       "texture": "blue_block.png"
     },
     {
@@ -2248,12 +2236,6 @@
       "x": 0,
       "y": 7,
       "z": 9,
-      "texture": "blue_block.png"
-    },
-    {
-      "x": 9,
-      "y": 9,
-      "z": 1,
       "texture": "blue_block.png"
     },
     {
