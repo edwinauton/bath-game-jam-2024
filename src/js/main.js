@@ -182,7 +182,7 @@ async function createBlocks(scene) {
 }
 
 /* Add given new blocks to existing blocks and recalculate renderingOrder, hasBlockAbove etc. */
-function addNewBlocks(newBlocks) {
+function addNewBlocks(newBlocks) { // TODO: Generalise to all sprites, and run every time a player moves, etc.
     let existingBlocks = app.stage.children.filter(child => child instanceof Block);
     const allBlocks = existingBlocks.concat(newBlocks)
     allBlocks.sort((a, b) => a.renderingOrder - b.renderingOrder); // Sort by descending rendering order
