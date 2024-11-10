@@ -7,22 +7,34 @@ const eventEmitter = new PIXI.EventEmitter();
 
 /* Parent class for Block and Player with shared fields and methods */
 class GameJamSprite extends PIXI.Sprite {
-    xRelative;
-    yRelative;
-    zRelative;
+    renderingOrder
+    gridX;
+    gridY;
+    gridZ;
 
     constructor(x, y, z, texture) {
         super({texture: texture});
-        this.xRelative = x;
-        this.yRelative = y;
-        this.zRelative = z;
+        this.gridX = x;
+        this.gridY = y;
+        this.gridZ = z;
 
+        this.gridToAbsolute(x, y, z)
+        this.updateRenderingOrder()
+    }
+
+    gridToAbsolute(x, y, z = 1) {
         const xCentre = app.screen.width / 2 - this.width / 2;  // Centre horizontally on-screen
         this.x = (0.50 * x * this.width) - (0.50 * y * this.height) + xCentre;
 
         const yAlign = app.screen.height / 3;  // Align vertically on-screen
         const zOffset = z * this.height / 2;
         this.y = (0.25 * x * this.width) + (0.25 * y * this.height) + yAlign - zOffset;
+
+        return {x: this.x, y: this.y};
+    }
+
+    updateRenderingOrder() {
+        this.renderingOrder = this.gridX + this.gridY + this.gridZ
     }
 
     render() {
@@ -31,18 +43,16 @@ class GameJamSprite extends PIXI.Sprite {
 }
 
 /**
- *  @param {Number} x               relative x-coordinate for the block
- *  @param {Number} y               relative y-coordinate for the block
- *  @param {Number} z               relative z-coordinate for the block
- *  @param {Texture} texture        image texture to be rendered for the block
+ *  @param {Number} x               grid x-coordinate for the block
+ *  @param {Number} y               grid y-coordinate for the block
+ *  @param {Number} z               grid z-coordinate for the block
+ *  @param {Texture} texture        texture asset to be rendered for the block
  *  */
 class Block extends GameJamSprite {
     staticY;
 
     constructor(x, y, z, texture) {
         super(x, y, z, texture);
-
-        this.renderingOrder = z * this.height;  // Calculate absolute position of bottom of sprite
         this.staticY = this.y;
     }
 
@@ -64,24 +74,24 @@ class Block extends GameJamSprite {
         }
     }
 
-    /* Check if there is a block immediately above this one*/
+    /* Check if there is a block immediately above this one */
     checkBlockAbove(blocks) {
         const blockMap = new Map();
         blocks.forEach(block => {
-            const key = `${block.xRelative},${block.yRelative},${block.zRelative}`;  // Create keys to add to map
+            const key = `${block.gridX},${block.gridY},${block.gridZ}`;  // Create keys to add to map
             blockMap.set(key, block); // Create map of key (x,y,z) -> value (Block)
         });
 
-        const key = `${this.xRelative},${this.yRelative},${this.zRelative + 1}`; // Create key to search in map
+        const key = `${this.gridX},${this.gridY},${this.gridZ + 1}`; // Create key to search in map
         this.hasBlockAbove = blockMap.has(key);
     }
 }
 
 /**
- *  @param {Number} x               relative x-coordinate spawn for the player
- *  @param {Number} y               relative y-coordinate spawn for the player
- *  @param {Number} z               relative z-coordinate spawn for the player
- *  @param {Texture} texture        image texture to be rendered for the player
+ *  @param {Number} x               grid x-coordinate spawn for the player
+ *  @param {Number} y               grid y-coordinate spawn for the player
+ *  @param {Number} z               grid z-coordinate spawn for the player
+ *  @param {Texture} texture        texture asset to be rendered for the player
  *  */
 class Player extends GameJamSprite {
     constructor(x, y, z, texture) {
@@ -91,23 +101,39 @@ class Player extends GameJamSprite {
         eventEmitter.on('movePlayer', this.moveTo.bind(this));  // Run 'moveTo' when 'movePlayer' event triggers
     }
 
-    /* Smoothly move the player from their current position to a new block */ // TODO: Use pathfinding algorithm?
+    /* Moves the player from their current position to a new block in calculated steps */ // TODO: Check for z-levels
     moveTo(block) {
-        if (Math.abs((block.zRelative + 1) - this.zRelative) <= 1) {
-            const yAbsolute = block.staticY - block.height / 2; // Correct for block size
-            createjs.Tween.get(this).to({x: block.x, y: yAbsolute}, 2000, createjs.Ease.sineInOut); // Basic movement
+        if (!block.hasBlockAbove && block.gridZ === this.gridZ - 1) { // Only run for accessible blocks on this level
+            createjs.Tween.removeTweens(this); // Stops ongoing Tweens
 
-            this.xRelative = block.xRelative;
-            this.yRelative = block.yRelative;
-            this.zRelative = block.zRelative + 1;
+            const animateStep = () => {
+                let moved = false;
+
+                if (this.gridX !== block.gridX) {
+                    this.gridX += (this.gridX < block.gridX) ? 1 : -1; // 1 if true, -1 if false
+                    moved = true;
+                } else if (this.gridY !== block.gridX) {
+                    this.gridY += (this.gridY < block.gridY) ? 1 : -1; // 1 if true, -1 if false
+                    moved = true;
+                }
+
+                if (moved) {  // Check if anything has been changed
+                    const absolute = this.gridToAbsolute(this.gridX, this.gridY);
+                    this.updateRenderingOrder()
+                    createjs.Tween.get(this)
+                        .to({x: absolute.x, y: absolute.y}, 150, createjs.Ease.sineInOut)
+                        .call(animateStep);  // Loop animateStep
+                }
+            }
+            animateStep();
         }
     }
 }
 
 /* Read blocks from JSON file and make list of Block objects */
-async function createBlocks() {
+async function createBlocks(scene) {
     const jsonFile = await PIXI.Assets.load({src: '../resources/blocks.json', loader: 'loadJson'});
-    const blocks = jsonFile.blocks;
+    const blocks = jsonFile[scene]
 
     const blockObjects = [];
     for (const block of blocks) {
@@ -117,30 +143,35 @@ async function createBlocks() {
     return blockObjects;
 }
 
-/* Sort blocks to be in correct rendering order */
-function sortBlocks() {
-    app.stage.children.sort((a, b) => a.renderingOrder - b.renderingOrder); // Sort by rendering order, descending
-}
+/* Add given new blocks to existing blocks and recalculate renderingOrder, hasBlockAbove etc. */
+function addNewBlocks(newBlocks) {
+    let existingBlocks = app.stage.children.filter(child => child instanceof Block);
+    const allBlocks = existingBlocks.concat(newBlocks)
+    allBlocks.sort((a, b) => a.renderingOrder - b.renderingOrder); // Sort by descending rendering order
+    clearStage();
 
-/* */
-function addNewBlocks(blocks) {
-    blocks.forEach(block => {
-        block.checkBlockAbove(blocks);
+    allBlocks.forEach(block => {
+        block.render();
+        block.checkBlockAbove(allBlocks);
         block.animate();
-        block.render()
-        sortBlocks();
-    });
+    })
 }
 
-/* Create player */
+/* Remove all children from the stage */
+function clearStage() {
+    app.stage.children.forEach(child => child.remove());
+}
+
+/* Create player */ // TODO: Player selection?
 async function createPlayer() {
     const texture = await PIXI.Assets.load(`../resources/assets/blue_slab.png`);
-    const player = new Player(9, 9, 2, texture)
+    const player = new Player(9, 9, 1, texture)
     player.render();
 }
 
 /* Main logic */
 (async () => {
-    addNewBlocks(await createBlocks());
+    const testLevel = await createBlocks('test_screen')
+    addNewBlocks(testLevel);
     await createPlayer();
 })();
