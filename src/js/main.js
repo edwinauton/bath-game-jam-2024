@@ -11,7 +11,6 @@ const eventEmitter = new PIXI.EventEmitter();
  *  @param {Texture} texture        texture asset to be rendered for the sprite
  *  */
 class GameJamSprite extends PIXI.Sprite {
-    renderingOrder
     gridX;
     gridY;
     gridZ;
@@ -19,12 +18,12 @@ class GameJamSprite extends PIXI.Sprite {
     constructor(x, y, z, texture) {
         super({texture: texture});
         this.anchor.set(0.5);
+        this.gridToAbsolute(x, y, z);
 
         this.gridX = x;
         this.gridY = y;
         this.gridZ = z;
-        this.gridToAbsolute(x, y, z);
-        this.updateRenderingOrder();
+        this.zIndex = this.gridX + this.gridY + this.gridZ
     }
 
     /* Convert from grid coordinates to pixel coordinates */
@@ -37,11 +36,6 @@ class GameJamSprite extends PIXI.Sprite {
         this.y = (0.25 * x * this.width) + (0.25 * y * this.height) + yAlign - zOffset;
 
         return {x: this.x, y: this.y};
-    }
-
-    /* Recalculate rendering order */
-    updateRenderingOrder() {
-        this.renderingOrder = this.gridX + this.gridY + this.gridZ
     }
 
     /* Shortcut to app.stage.addChild(this) */
@@ -145,7 +139,7 @@ class Player extends GameJamSprite {
     constructor(x, y, z, texture) {
         super(x, y, z, texture);
 
-        this.renderingOrder = Infinity; // Always on top
+        this.zIndex = Infinity; // Always on top
         eventEmitter.on('movePlayer', this.moveTo.bind(this));  // Run 'moveTo' when 'movePlayer' event triggers
     }
 
@@ -167,7 +161,6 @@ class Player extends GameJamSprite {
 
                 if (moved) {  // Check if anything has been changed
                     const absolute = this.gridToAbsolute(this.gridX, this.gridY);
-                    this.updateRenderingOrder()
                     createjs.Tween.get(this)
                         .to({x: absolute.x, y: absolute.y}, 150, createjs.Ease.sineInOut)
                         .call(animateStep);  // Continue loop
@@ -257,7 +250,9 @@ class Interactable extends GameJamSprite {
         rectangle.y = this.y - 45;
         rectangle.roundRect(0, 0, width, height, 10).fill('0x000000A8');
         rectangle.addChild(text);
-        rectangle.alpha = 0;
+
+        rectangle.alpha = 0; // Start hidden
+        rectangle.zIndex = Infinity; // Always on top
 
         return rectangle;
     }
@@ -279,9 +274,8 @@ async function readBlocks(scene) {
 function addBlocks(blocks) { // TODO: Generalise to all sprites, and run every time a player moves, etc.
     let existingBlocks = app.stage.children.filter(child => child instanceof Block);
     const allBlocks = existingBlocks.concat(blocks);
-    allBlocks.sort((a, b) => a.renderingOrder - b.renderingOrder); // Sort by descending rendering order
-    app.stage.children.forEach(child => child.remove());
 
+    app.stage.children.forEach(child => child.remove());
     allBlocks.forEach(block => {
         block.render();
         block.checkBlockAbove(allBlocks);
