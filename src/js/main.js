@@ -38,6 +38,7 @@ class GameJamSprite extends PIXI.Sprite {
         return {x: this.x, y: this.y};
     }
 
+    /* Update this.zIndex */
     updateRenderingOrder() {
         this.zIndex = this.gridX + this.gridY + this.gridZ;
     }
@@ -45,46 +46,6 @@ class GameJamSprite extends PIXI.Sprite {
     /* Shortcut to app.stage.addChild(this) */
     render() {
         app.stage.addChild(this);
-    }
-
-    /* Fade in to alpha = 1 */
-    fadeIn(sprite = this) {
-        app.stage.addChild(sprite);
-        createjs.Tween.get(sprite)
-            .to({alpha: 1}, 100, createjs.Ease.sineInOut); // Fade in
-    }
-
-    /* Fade out to alpha = 0 */
-    fadeOut(sprite = this) {
-        createjs.Tween.get(sprite)
-            .to({alpha: 0}, 100, createjs.Ease.sineInOut) // Fade out
-            .call(() => app.stage.removeChild(sprite)); // Remove item label
-    }
-
-    /* Shrink to size = 0 */
-    shrinkOut(sprite = this) {
-        createjs.Tween.get(sprite.scale)
-            .to({x: 0, y: 0}, 250, createjs.Ease.sineInOut) // Fade out
-            .call(() => app.stage.removeChild(sprite)); // Remove item label
-    }
-
-    /* Hovering animation */
-    hover() {
-        createjs.Tween.get(this)
-            .to({y: this.staticY - (this.height / 10)}, 150, createjs.Ease.sineInOut);
-    }
-
-    /* Sinking animation */
-    sink() {
-        createjs.Tween.get(this)
-            .to({y: this.staticY}, 150, createjs.Ease.sineInOut);
-    }
-
-    /* Looping bouncing animation */
-    bounce() {
-        createjs.Tween.get(this, {loop: true}) // Loop animation
-            .to({y: this.y - (this.height / 10)}, 1000, createjs.Ease.sineInOut)
-            .to({y: this.y}, 1000, createjs.Ease.sineInOut);
     }
 }
 
@@ -108,14 +69,18 @@ class Block extends GameJamSprite {
 
         this.addEventListener('pointerenter', () => {
             if (!this.hasBlockAbove) {
-                this.hover();
+                createjs.Tween.get(this)
+                    .to({y: this.staticY - (this.height / 10)}, 150, createjs.Ease.sineInOut);
             }
         });
         this.addEventListener('pointerleave', () => {
-            this.sink();
+            createjs.Tween.get(this)
+                .to({y: this.staticY}, 150, createjs.Ease.sineInOut);
         });
         this.addEventListener('click', () => {
-            this.sink();
+            createjs.Tween.get(this)
+                .to({y: this.staticY}, 150, createjs.Ease.sineInOut);
+            
             if (!this.hasBlockAbove) {
                 eventEmitter.emit('movePlayer', this);
             }
@@ -192,7 +157,10 @@ class Interactable extends GameJamSprite {
     /* Looping hovering animation */
     animate() {
         this.eventMode = 'static'; // Allow animation
-        this.bounce();
+
+        createjs.Tween.get(this, {loop: true}) // Loop animation
+            .to({y: this.y - (this.height / 10)}, 1000, createjs.Ease.sineInOut)
+            .to({y: this.y}, 1000, createjs.Ease.sineInOut);
     }
 
     /* Add hover and click functionality */
@@ -200,15 +168,25 @@ class Interactable extends GameJamSprite {
         const label = this.createLabel();
 
         this.addEventListener('pointerenter', () => {
-            this.fadeIn(label);
+            app.stage.addChild(label);
+            createjs.Tween.get(label)
+                .to({alpha: 1}, 100, createjs.Ease.sineInOut); // Fade in
         });
         this.addEventListener('pointerleave', () => {
-            this.fadeOut(label);
+            createjs.Tween.get(label)
+                .to({alpha: 0}, 100, createjs.Ease.sineInOut) // Fade out
+                .call(() => app.stage.removeChild(label)); // Remove item label
         });
         this.addEventListener('click', () => {
             if (this.hasAdjacentPlayer()) {
-                this.fadeOut(label);
-                this.shrinkOut();
+                createjs.Tween.get(label)
+                    .to({alpha: 0}, 100, createjs.Ease.sineInOut) // Fade out
+                    .call(() => app.stage.removeChild(label)); // Remove item label
+
+                createjs.Tween.get(this.scale)
+                    .to({x: 0, y: 0}, 250, createjs.Ease.sineInOut) // Fade out
+                    .call(() => app.stage.removeChild(this)); // Remove item label
+
                 console.log(`You collected a ${this.label}!`); // TODO: Add functionality
             }
         });
