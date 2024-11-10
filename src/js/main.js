@@ -158,7 +158,7 @@ class Interactable extends GameJamSprite {
 
     /* Add hover and click functionality */
     addInteractivity() {
-        const label = new Label(this);
+        const label = this.createLabel()
 
         this.addEventListener('pointerenter', () => {
             app.stage.addChild(label); // Display item label
@@ -191,20 +191,13 @@ class Interactable extends GameJamSprite {
         const key4 = `${this.gridX},${this.gridY - 1},${this.gridZ}`; // Create key to search in map
         return (playerMap.has(key1) || playerMap.has(key2) || playerMap.has(key3) || playerMap.has(key4));
     }
-}
 
-/**
- *  @param {Interactable} interactable  interactable the label belongs to
- *  */
-class Label extends PIXI.Graphics {
-    constructor(interactable) {
-        super();
-
-        this.x = interactable.x - interactable.width;
-        this.y = interactable.y - 30;
-
+    createLabel() {
+        const rectangle = new PIXI.Graphics();
+        rectangle.x = this.x - this.width;
+        rectangle.y = this.y - 30;
         const text = new PIXI.Text({
-            text: interactable.label, style: {
+            text: this.label, style: {
                 fontFamily: "Verdana, Geneva, sans-serif", fontSize: 16, fill: 0xFFFFFF
             }
         });
@@ -213,12 +206,13 @@ class Label extends PIXI.Graphics {
         const padding = 7;
         const width = text.width + 2 * padding;
         const height = text.height + 2 * padding;
-
-        this.roundRect(0, 0, width, height, 10).fill('0x000000A8');
+        rectangle.roundRect(0, 0, width, height, 10).fill('0x000000A8');
 
         text.x = width / 2;
         text.y = height / 2;
-        this.addChild(text);
+        rectangle.addChild(text);
+
+        return rectangle;
     }
 }
 
@@ -238,7 +232,7 @@ async function createBlocks(scene) {
 /* Add given new blocks to existing blocks and recalculate renderingOrder, hasBlockAbove etc. */
 function addNewBlocks(newBlocks) { // TODO: Generalise to all sprites, and run every time a player moves, etc.
     let existingBlocks = app.stage.children.filter(child => child instanceof Block);
-    const allBlocks = existingBlocks.concat(newBlocks)
+    const allBlocks = existingBlocks.concat(newBlocks);
     allBlocks.sort((a, b) => a.renderingOrder - b.renderingOrder); // Sort by descending rendering order
     app.stage.children.forEach(child => child.remove());
 
@@ -255,7 +249,7 @@ async function createPlayer(playerIndex) { // TODO: Player selection?
     const player = jsonFile.players[playerIndex];
 
     const texture = await PIXI.Assets.load(`../resources/assets/${player.texture}`);
-    const playerObject = new Player(9, 9, 1, texture)
+    const playerObject = new Player(9, 9, 1, texture);
     playerObject.render();
 }
 
@@ -274,7 +268,7 @@ async function createInteractables(scene) {
 
 /* Main logic */
 (async () => {
-    const testLevel = await createBlocks('test_screen')
+    const testLevel = await createBlocks('test_screen');
     addNewBlocks(testLevel);
     await createInteractables('test_screen');
     await createPlayer(0);
