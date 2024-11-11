@@ -21,18 +21,19 @@ class GameJamSprite extends PIXI.Sprite {
         this.gridY = y;
         this.gridZ = z;
 
+        this.defaultTint = 0x000000;
+        this.defaultAlpha = 0.5;
+
         this.updateRenderingOrder();
+        this.createOverlay()
+        this.updateOverlay()
+        this.render();
+    }
 
-        // create overlay
-        this.overlay = new PIXI.Sprite(texture);
-        this.overlay.tint = 0xffffff; 
-        this.overlay.alpha = 0;
-
-        // align overlay
-        this.overlay.anchor.set(this.anchor.x, this.anchor.y);
-        this.overlay.position.set(0, 0);
-        this.overlay.width = this.width;
-        this.overlay.height = this.height;
+    /* Update tint and alpha for the overlay */
+    updateOverlay(tint = this.defaultTint, alpha = this.defaultAlpha) {
+        this.overlay.tint = tint;
+        this.overlay.alpha = alpha;
     }
 
     /* Convert from grid coordinates to pixel coordinates and set `this.x` and `this.y` to the pixel coordinates */
@@ -45,6 +46,14 @@ class GameJamSprite extends PIXI.Sprite {
         this.y = (0.25 * x * this.width) + (0.25 * y * this.height) + yAlign - zOffset;
 
         return {x: this.x, y: this.y};
+    }
+
+    /* Setup overlay for this block */
+    createOverlay() {
+        this.overlay = new PIXI.Sprite(this.texture);
+        this.overlay.tint = 0xffffff;
+        this.overlay.alpha = 0;
+        this.overlay.anchor.set(this.anchor.x, this.anchor.y);
     }
 
     /* Update `this.zIndex` */

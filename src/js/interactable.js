@@ -17,7 +17,6 @@ class Interactable extends GameJamSprite {
 
         this.label = label;
 
-        this.render();
         this.animate();
         this.addInteractivity();
     }
@@ -80,6 +79,7 @@ class Interactable extends GameJamSprite {
         return (playerMap.has(key1) || playerMap.has(key2) || playerMap.has(key3) || playerMap.has(key4));
     }
 
+    /* Setup label text and return rectangle container */
     createLabel() {
         const rectangle = new PIXI.Graphics();
         const text = new PIXI.Text({

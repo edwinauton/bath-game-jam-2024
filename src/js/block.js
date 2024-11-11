@@ -1,5 +1,5 @@
 import GameJamSprite from "./gameJamSprite.js";
-import {app, eventEmitter} from "./main.js";
+import {app, buildMode, eventEmitter, tick} from "./main.js";
 
 /**
  *  @param {Number} x               grid x-coordinate for the block
@@ -14,18 +14,10 @@ class Block extends GameJamSprite {
         super(x, y, z, texture);
 
         this.staticY = this.y;
-        this.defaultTint = 0x000000;
-        this.defaultAlpha = 0.5;
-      
-        this.render();
+
         this.animate();
     }
 
-    changeFilter(tint=this.defaultTint, alpha=this.defaultAlpha) {
-        this.overlay.tint = tint; 
-        this.overlay.alpha = alpha;
-    }
-    
     /* Add hover and click animations */
     animate() {
         this.eventMode = 'static'; // Allow blocks to be animated
@@ -50,12 +42,11 @@ class Block extends GameJamSprite {
                 eventEmitter.emit('movePlayer', this);
             }
 
-            const buildMode = true;
             if (buildMode) {
                 const localPoint = event.data.getLocalPosition(this);
                 const face = this.getClickedFace(localPoint);
 
-                switch(face){
+                switch (face) {
                     case 'top':
                         app.stage.add(new Block(this.gridX, this.gridY, this.gridZ + 1, this.texture));
                         break;
@@ -77,14 +68,15 @@ class Block extends GameJamSprite {
         this.hasBlockAbove = spriteMap.has(aboveKey); // Check if the key is in the map
     }
 
-    getClickedFace(localPoint){
+    /* Return which face was clicked */
+    getClickedFace(localPoint) {
         // Define vertices of  isometric cube
         const top = {x: 0, y: -this.height / 2};
-        const topLeft = {x: -this.width/2, y: -this.height / 4};
-        const topRight = {x: this.width/2, y: -this.height / 4};
-        const bottomLeft = {x: -this.width/2, y: this.height / 4};
-        const bottomRight = {x: this.width/2, y: this.height / 4};
-        const centre = {x: 0 , y: 0};
+        const topLeft = {x: -this.width / 2, y: -this.height / 4};
+        const topRight = {x: this.width / 2, y: -this.height / 4};
+        const bottomLeft = {x: -this.width / 2, y: this.height / 4};
+        const bottomRight = {x: this.width / 2, y: this.height / 4};
+        const centre = {x: 0, y: 0};
         const bottom = {x: 0, y: this.height / 2};
 
         // Define faces in terms of points

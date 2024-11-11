@@ -8,10 +8,9 @@ import LightSource from './lightSource.js';
 export const app = new PIXI.Application();
 await app.init({background: '#FFFFFF', resizeTo: window});
 document.body.appendChild(app.canvas);
-export const eventEmitter = new PIXI.EventEmitter();
 
-const allBlocks = [];
-const allLightSources = [];
+export const eventEmitter = new PIXI.EventEmitter();
+export const buildMode = false;
 
 /* Read in blocks and instantiate them */
 async function createBlocks(scene) {
@@ -41,12 +40,11 @@ async function createPlayer(playerIndex) { // TODO: Player selection?
     new Player(9, 9, 1, texture);
 }
 
+/* Setup light source */
 async function createLightSource() {
-    const texture = await PIXI.Assets.load('../resources/assets/blue_block.png');
-    const lightSource = new LightSource(9, 9, 1, texture);
-    lightSource.render();
-    lightSource.applyLight(allBlocks);
-    allLightSources.push(lightSource);
+    const texture = await PIXI.Assets.load('../resources/assets/red_block.png');
+    const players = app.stage.children.filter(child => child instanceof Player);
+    new LightSource(players[0].gridX, players[0].gridY, players[0].gridZ, texture);
 }
 
 /* Read given JSON file and return data from given array */
@@ -64,21 +62,24 @@ export function tick() {
             const key = `${child.gridX},${child.gridY},${child.gridZ}`; // Create key for the sprite
             spriteMap.set(key, child); // Create map of key (x,y,z) -> value (GameJamSprite)
             child.updateRenderingOrder();
+            child.updateOverlay();
         }
     });
 
     app.stage.children.forEach(child => {
         if (child instanceof Block) {
             child.checkAbove(spriteMap);
-            child.changeFilter();
         }
     });
-    for (const lightSource of allLightSources) {
-        const players = app.stage.children.filter(child => child instanceof Player);
-        let pos = {x: players[0].x, y: players[0].y};
-        lightSource.updateLocation(pos.x, pos.y);
-        lightSource.applyLight(allBlocks);
-    }
+
+    const players = app.stage.children.filter(child => child instanceof Player);
+    app.stage.children.forEach(child => {
+        if (child instanceof LightSource) {
+            child.x =  players[0].x;
+                child.y =  players[0].y;
+            child.applyLight();
+        }
+    });
 }
 
 /* ---------- Main Logic ---------- */
