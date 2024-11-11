@@ -19,6 +19,7 @@ class GameJamSprite extends PIXI.Sprite {
         this.gridX = x;
         this.gridY = y;
         this.gridZ = z;
+
         this.updateRenderingOrder();
     }
 

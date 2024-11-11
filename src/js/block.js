@@ -12,6 +12,7 @@ class Block extends GameJamSprite {
 
     constructor(x, y, z, texture) {
         super(x, y, z, texture);
+
         this.staticY = this.y;
 
         this.render();
@@ -33,7 +34,7 @@ class Block extends GameJamSprite {
             createjs.Tween.get(this)
                 .to({y: this.staticY}, 150, createjs.Ease.sineInOut);
         });
-        
+
         this.addEventListener('click', () => {
             createjs.Tween.get(this)
                 .to({y: this.staticY}, 150, createjs.Ease.sineInOut);
