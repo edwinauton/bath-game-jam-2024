@@ -59,12 +59,9 @@ class Interactable extends GameJamSprite {
 
                 const lightSources = app.stage.children.filter(child => child instanceof LightSource);
                 const player = app.stage.children.filter(child => child instanceof Player)[0];
-
                 lightSources.forEach(source => {
                     if (source.target === this) {
-                        source.hide();
-                    } else if (source.target === player) {
-                        source.radius = 100;
+                        source.target = player
                     }
                 })
 
