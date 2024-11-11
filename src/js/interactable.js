@@ -72,16 +72,16 @@ class Interactable extends GameJamSprite {
 
     /* Check for a player in any adjacent tile */
     hasAdjacentPlayer() {
-        const player = app.stage.children.filter(child => child instanceof Player)[0];
         const playerMap = new Map();
+        const player = app.stage.children.filter(child => child instanceof Player)[0];
         const key = `${player.gridX},${player.gridY},${player.gridZ}`;  // Create keys to add to map
         playerMap.set(key, player); // Create map of key (x,y,z) -> value (Player)
 
-        // Check all four adjacent tiles to this one
-        const key1 = `${this.gridX + 1},${this.gridY},${this.gridZ}`; // Create key to search in map
-        const key2 = `${this.gridX - 1},${this.gridY},${this.gridZ}`; // Create key to search in map
-        const key3 = `${this.gridX},${this.gridY + 1},${this.gridZ}`; // Create key to search in map
-        const key4 = `${this.gridX},${this.gridY - 1},${this.gridZ}`; // Create key to search in map
+        // Create keys for the four adjacent tiles to this one
+        const key1 = `${this.gridX + 1},${this.gridY},${this.gridZ}`;
+        const key2 = `${this.gridX - 1},${this.gridY},${this.gridZ}`;
+        const key3 = `${this.gridX},${this.gridY + 1},${this.gridZ}`;
+        const key4 = `${this.gridX},${this.gridY - 1},${this.gridZ}`;
         return (playerMap.has(key1) || playerMap.has(key2) || playerMap.has(key3) || playerMap.has(key4));
     }
 
@@ -93,7 +93,6 @@ class Interactable extends GameJamSprite {
                 fontFamily: "Courier New", fontSize: 16, fill: 0xFFFFFF
             }
         });
-
         const padding = 7;
         const width = text.width + 2 * padding;
         const height = text.height + 2 * padding;
@@ -103,7 +102,7 @@ class Interactable extends GameJamSprite {
         text.y = height / 2;
 
         rectangle.x = this.x - width / 2;
-        rectangle.y = this.y - 45;
+        rectangle.y = this.y - 1.5 * this.height;
         rectangle.roundRect(0, 0, width, height, 7).fill('0x000000A8');
         rectangle.alpha = 0; // Start hidden
         rectangle.zIndex = Infinity; // Always on top

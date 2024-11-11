@@ -81,9 +81,9 @@ class Block extends GameJamSprite {
         const bottom = {x: 0, y: this.height / 2};
 
         // Define faces in terms of points
-        const topFace = new PIXI.Polygon([new PIXI.Point(topLeft.x, topLeft.y), new PIXI.Point(top.x, top.y), new PIXI.Point(topRight.x, topRight.y), new PIXI.Point(centre.x, centre.y),])
-        const leftFace = new PIXI.Polygon([new PIXI.Point(bottomLeft.x, bottomLeft.y), new PIXI.Point(topLeft.x, topLeft.y), new PIXI.Point(centre.x, centre.y), new PIXI.Point(bottom.x, bottom.y),])
-        const rightFace = new PIXI.Polygon([new PIXI.Point(bottom.x, bottom.y), new PIXI.Point(centre.x, centre.y), new PIXI.Point(topRight.x, topRight.y), new PIXI.Point(bottomRight.x, bottomRight.y),])
+        const topFace = new PIXI.Polygon([new PIXI.Point(topLeft.x, topLeft.y), new PIXI.Point(top.x, top.y), new PIXI.Point(topRight.x, topRight.y), new PIXI.Point(centre.x, centre.y)]);
+        const leftFace = new PIXI.Polygon([new PIXI.Point(bottomLeft.x, bottomLeft.y), new PIXI.Point(topLeft.x, topLeft.y), new PIXI.Point(centre.x, centre.y), new PIXI.Point(bottom.x, bottom.y)]);
+        const rightFace = new PIXI.Polygon([new PIXI.Point(bottom.x, bottom.y), new PIXI.Point(centre.x, centre.y), new PIXI.Point(topRight.x, topRight.y), new PIXI.Point(bottomRight.x, bottomRight.y)]);
 
         // Check which face is clicked by the pointer
         if (topFace.contains(localPoint.x, localPoint.y)) {
