@@ -47,7 +47,7 @@ async function readJSON(fileName, array) {
     return jsonFile[array];
 }
 
-/* Recalculate rendering order and run checkAbove for blocks */
+/* Recalculate `zIndex` and run `checkAbove` for blocks */
 export function tick() {
     const spriteMap = new Map();
 

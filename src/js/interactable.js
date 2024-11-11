@@ -76,6 +76,7 @@ class Interactable extends GameJamSprite {
 
     createLabel() {
         const rectangle = new PIXI.Graphics();
+
         const text = new PIXI.Text({
             text: this.label, style: {
                 fontFamily: "Verdana, Geneva, sans-serif", fontSize: 16, fill: 0xFFFFFF

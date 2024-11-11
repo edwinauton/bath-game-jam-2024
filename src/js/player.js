@@ -31,12 +31,14 @@ export class Player extends GameJamSprite {
                 }
 
                 if (moved) {  // Check if anything has been changed
-                    const absolute = this.gridToAbsolute(this.gridX, this.gridY);
                     this.updateRenderingOrder();
+
+                    const absolute = this.gridToAbsolute(this.gridX, this.gridY);
                     createjs.Tween.get(this)
                         .to({x: absolute.x, y: absolute.y}, 150, createjs.Ease.sineInOut)
                         .call(animateStep);  // Continue loop
-                    tick();
+
+                    tick(); // Update all rendering orders and blocks
                 }
             }
             animateStep(); // Start loop

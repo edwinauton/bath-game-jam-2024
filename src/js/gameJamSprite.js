@@ -22,7 +22,7 @@ class GameJamSprite extends PIXI.Sprite {
         this.updateRenderingOrder();
     }
 
-    /* Convert from grid coordinates to pixel coordinates */
+    /* Convert from grid coordinates to pixel coordinates and set `this.x` and `this.y` to the pixel coordinates */
     gridToAbsolute(x, y, z = 1) {
         const xCentre = app.screen.width / 2;  // Centre horizontally on-screen
         this.x = (0.50 * x * this.width) - (0.50 * y * this.height) + xCentre;
@@ -34,17 +34,17 @@ class GameJamSprite extends PIXI.Sprite {
         return {x: this.x, y: this.y};
     }
 
-    /* Update this.zIndex */
+    /* Update `this.zIndex` */
     updateRenderingOrder() {
         this.zIndex = this.gridX + this.gridY + this.gridZ;
     }
 
-    /* Shortcut to app.stage.addChild(this) */
+    /* Shortcut to `app.stage.addChild(this)` */
     render() {
         app.stage.addChild(this);
     }
 
-    /* Shortcut to app.stage.removeChild(this) */
+    /* Shortcut to `app.stage.removeChild(this)` */
     hide() {
         app.stage.removeChild(this);
     }
