@@ -12,6 +12,10 @@ document.body.appendChild(app.canvas);
 export const eventEmitter = new PIXI.EventEmitter();
 export const buildMode = false;
 
+export async function readSettings(key) {
+    return await readJSON('settings.json', key);
+}
+
 /* Read in blocks and instantiate them */
 async function createBlocks(scene) {
     const blocks = await readJSON('blocks.json', scene);
@@ -37,7 +41,8 @@ async function createPlayer(playerIndex) { // TODO: Player selection?
     const player = (await readJSON('players.json', 'players'))[playerIndex];
 
     const texture = await PIXI.Assets.load(`../resources/assets/${player.texture}`);
-    new Player(9, 9, 1, texture);
+    const spawnLocation = await readSettings('player_spawn');
+    new Player(spawnLocation.x, spawnLocation.y, spawnLocation.z, texture);
 }
 
 /* Setup light source */
@@ -75,8 +80,8 @@ export function tick() {
     const players = app.stage.children.filter(child => child instanceof Player);
     app.stage.children.forEach(child => {
         if (child instanceof LightSource) {
-            child.x =  players[0].x;
-                child.y =  players[0].y;
+            child.x = players[0].x;
+            child.y = players[0].y;
             child.applyLight();
         }
     });
@@ -84,9 +89,15 @@ export function tick() {
 
 /* ---------- Main Logic ---------- */
 (async () => {
-    await createBlocks('test_screen');
-    await createInteractables('test_screen');
-    await createPlayer(0);
-    await createLightSource();
+    const scene = await readSettings('level')
+    await createBlocks(scene);
+
+    if (!await readSettings('build_mode')) {
+        await createInteractables(scene);
+        const player = await readSettings('player')
+        await createPlayer(player);
+        await createLightSource();
+    }
+
     tick();
 })();

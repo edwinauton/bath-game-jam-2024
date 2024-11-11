@@ -1,5 +1,5 @@
 import GameJamSprite from "./gameJamSprite.js";
-import {app, buildMode, eventEmitter, tick} from "./main.js";
+import {app, eventEmitter, readSettings, tick} from "./main.js";
 
 /**
  *  @param {Number} x               grid x-coordinate for the block
@@ -34,7 +34,7 @@ class Block extends GameJamSprite {
                 .to({y: this.staticY}, 150, createjs.Ease.sineInOut);
         });
 
-        this.addEventListener('click', (event) => {
+        this.addEventListener('click', async (event) => {
             createjs.Tween.get(this)
                 .to({y: this.staticY}, 150, createjs.Ease.sineInOut);
 
@@ -42,6 +42,7 @@ class Block extends GameJamSprite {
                 eventEmitter.emit('movePlayer', this);
             }
 
+            const buildMode = await readSettings('build_mode')
             if (buildMode) {
                 const localPoint = event.data.getLocalPosition(this);
                 const face = this.getClickedFace(localPoint);

@@ -20,7 +20,6 @@ class LightSource extends GameJamSprite {
     applyLight() {
         let pos = {x: this.x, y: this.y + this.height / 2};
         const blocks = this.getBlocksInEllipse(pos, 100);
-        console.log(`Number of blocks retrieved: ${blocks.length}`);
         this.updateBlockTints(blocks, 0xffffff, 0.5);
     }
 
@@ -36,8 +35,6 @@ class LightSource extends GameJamSprite {
         for (const block of blocks) {
             if (this.isPointInEllipse(block.x, block.y, pos.x, pos.y, radius, radius * 0.5)) {
                 blocks_in_radius.push(block)
-                console.log(`Position: ${pos.x}, ${pos.y}`);
-                console.log(`Block: ${block.x}, ${block.y}`);
             }
         }
         return blocks_in_radius

@@ -10,6 +10,8 @@ class GameJamSprite extends PIXI.Sprite {
     gridX;
     gridY;
     gridZ;
+    defaultAlpha;
+    defaultTint;
     overlay;
 
     constructor(x, y, z, texture) {
