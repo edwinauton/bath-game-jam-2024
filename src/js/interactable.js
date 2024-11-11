@@ -16,6 +16,9 @@ class Interactable extends GameJamSprite {
         super(x, y, z, texture);
 
         this.label = label;
+
+        this.render();
+        this.animate();
         this.addInteractivity();
     }
 
@@ -94,10 +97,9 @@ class Interactable extends GameJamSprite {
         rectangle.x = this.x - width / 2;
         rectangle.y = this.y - 45;
         rectangle.roundRect(0, 0, width, height, 10).fill('0x000000A8');
-        rectangle.addChild(text);
-
         rectangle.alpha = 0; // Start hidden
         rectangle.zIndex = Infinity; // Always on top
+        rectangle.addChild(text);
 
         return rectangle;
     }

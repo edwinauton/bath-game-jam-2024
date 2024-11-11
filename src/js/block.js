@@ -13,6 +13,9 @@ class Block extends GameJamSprite {
     constructor(x, y, z, texture) {
         super(x, y, z, texture);
         this.staticY = this.y;
+
+        this.render();
+        this.animate();
     }
 
     /* Add hover and click animations */

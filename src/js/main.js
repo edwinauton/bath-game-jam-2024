@@ -15,9 +15,7 @@ async function createBlocks(scene) {
 
     for (const block of blocks) {
         const texture = await PIXI.Assets.load(`../resources/assets/${block.texture}`);
-        const blockObject = new Block(block.x, block.y, block.z, texture);
-        blockObject.render();
-        blockObject.animate();
+        new Block(block.x, block.y, block.z, texture);
     }
 }
 
@@ -27,9 +25,7 @@ async function createInteractables(scene) {
 
     for (const interactable of interactables) {
         const texture = await PIXI.Assets.load(`../resources/assets/${interactable.texture}`);
-        const interactableObject = new Interactable(interactable.x, interactable.y, interactable.z, texture, interactable.label);
-        interactableObject.render();
-        interactableObject.animate();
+        new Interactable(interactable.x, interactable.y, interactable.z, texture, interactable.label);
     }
 }
 
@@ -37,8 +33,7 @@ async function createInteractables(scene) {
 async function createPlayer(playerIndex) { // TODO: Player selection?
     const player = (await readJSON('players.json', 'players'))[playerIndex];
     const texture = await PIXI.Assets.load(`../resources/assets/${player.texture}`);
-    const playerObject = new Player(9, 9, 1, texture);
-    playerObject.render();
+    new Player(9, 9, 1, texture);
 }
 
 /* Read given JSON file and return data from given array */
