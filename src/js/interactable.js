@@ -79,24 +79,23 @@ class Interactable extends GameJamSprite {
 
     createLabel() {
         const rectangle = new PIXI.Graphics();
-
         const text = new PIXI.Text({
             text: this.label, style: {
                 fontFamily: "Courier New", fontSize: 16, fill: 0xFFFFFF
             }
         });
-        text.anchor.set(0.5);
 
         const padding = 7;
         const width = text.width + 2 * padding;
         const height = text.height + 2 * padding;
 
+        text.anchor.set(0.5);
         text.x = width / 2;
         text.y = height / 2;
 
         rectangle.x = this.x - width / 2;
         rectangle.y = this.y - 45;
-        rectangle.roundRect(0, 0, width, height, 10).fill('0x000000A8');
+        rectangle.roundRect(0, 0, width, height, 7).fill('0x000000A8');
         rectangle.alpha = 0; // Start hidden
         rectangle.zIndex = Infinity; // Always on top
         rectangle.addChild(text);
