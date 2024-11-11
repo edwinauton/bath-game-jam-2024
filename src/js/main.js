@@ -54,7 +54,7 @@ export function tick() {
     app.stage.children.forEach(child => {
         if (child instanceof GameJamSprite) {
             const key = `${child.gridX},${child.gridY},${child.gridZ}`; // Create key for the sprite
-            spriteMap.set(key, child); // Add key to map
+            spriteMap.set(key, child); // Create map of key (x,y,z) -> value (GameJamSprite)
             child.updateRenderingOrder();
         }
     });

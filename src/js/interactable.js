@@ -79,7 +79,7 @@ class Interactable extends GameJamSprite {
 
         const text = new PIXI.Text({
             text: this.label, style: {
-                fontFamily: "Verdana, Geneva, sans-serif", fontSize: 16, fill: 0xFFFFFF
+                fontFamily: "Courier New", fontSize: 16, fill: 0xFFFFFF
             }
         });
         text.anchor.set(0.5);
