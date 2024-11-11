@@ -8,18 +8,22 @@ import {app} from "./main.js";
  *  @param {Texture} texture        texture asset to be rendered for the block
  *  */
 class LightSource extends GameJamSprite {
+    radius
+    target
 
-    constructor(x, y, z, texture) {
-        super(x, y, z, texture);
+    constructor(target, texture, radius) {
+        super(target.gridX, target.gridY, target.gridZ, texture);
         this.alpha = 0;
+        this.radius = radius
+        this.target = target;
 
-        this.applyLight();
+        this.applyLight(radius);
     }
 
     /* Update block tints to illuminate blocks */
     applyLight() {
         let pos = {x: this.x, y: this.y + this.height / 2};
-        const blocks = this.getBlocksInEllipse(pos, 100);
+        const blocks = this.getBlocksInEllipse(pos, this.radius);
         this.updateBlockTints(blocks, 0xffffff, 0.5);
     }
 
@@ -29,11 +33,11 @@ class LightSource extends GameJamSprite {
     }
 
     /* Return list of blocks within the ellipse */
-    getBlocksInEllipse(pos, radius) {
+    getBlocksInEllipse(pos) {
         let blocks_in_radius = [];
         const blocks = app.stage.children.filter(child => child instanceof GameJamSprite);
         for (const block of blocks) {
-            if (this.isPointInEllipse(block.x, block.y, pos.x, pos.y, radius, radius * 0.5)) {
+            if (this.isPointInEllipse(block.x, block.y, pos.x, pos.y, this.radius, 0.5 * this.radius)) {
                 blocks_in_radius.push(block)
             }
         }

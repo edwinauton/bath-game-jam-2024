@@ -1,6 +1,7 @@
-import {app} from "./main.js";
+import {app, tick} from "./main.js";
 import Player from "./player.js";
 import GameJamSprite from "./gameJamSprite.js";
+import LightSource from "./lightSource.js";
 
 /**
  *  @param {Number} x               grid x-coordinate for the interactable
@@ -56,7 +57,18 @@ class Interactable extends GameJamSprite {
                     .to({x: 0, y: 0}, 250, createjs.Ease.sineInOut) // Fade out
                     .call(() => this.hide()); // Remove item label
 
-                console.log(`You collected a ${this.label}!`); // TODO: Add functionality
+                const lightSources = app.stage.children.filter(child => child instanceof LightSource);
+                const player = app.stage.children.filter(child => child instanceof Player)[0];
+
+                lightSources.forEach(source => {
+                    if (source.target === this) {
+                        source.hide();
+                    } else if (source.target === player) {
+                        source.radius = 100;
+                    }
+                })
+
+                tick();
             }
         });
     }

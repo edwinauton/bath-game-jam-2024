@@ -47,8 +47,11 @@ async function createPlayer(playerIndex) { // TODO: Player selection?
 /* Setup light source */
 async function createLightSource() {
     const texture = await PIXI.Assets.load('../resources/assets/red_block.png');
+
     const player = app.stage.children.filter(child => child instanceof Player)[0];
-    new LightSource(player.gridX, player.gridY, player.gridZ, texture);
+    new LightSource(player, texture, 50);
+    const interactable = app.stage.children.filter(child => child instanceof Interactable)[0];
+    new LightSource(interactable, texture, 100);
 }
 
 /* Read given JSON file and return data from given array */
@@ -80,11 +83,10 @@ export function tick(buildMode = false) {
         }
     });
 
-    const player = app.stage.children.filter(child => child instanceof Player)[0];
     app.stage.children.forEach(child => {
         if (child instanceof LightSource) {
-            child.x = player.x;
-            child.y = player.y;
+            child.x = child.target.x;
+            child.y = child.target.y;
             child.applyLight();
         }
     });
@@ -92,11 +94,11 @@ export function tick(buildMode = false) {
 
 /* ---------- Main Logic ---------- */
 (async () => {
-    const scene = await readSettings('level')
+    const scene = await readSettings('level_name')
     await createBlocks(scene);
     if (!await readSettings('build_mode')) {
         await createInteractables(scene);
-        const player = await readSettings('player');
+        const player = await readSettings('player_index');
         await createPlayer(player);
         await createLightSource();
         tick();
