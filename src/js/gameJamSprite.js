@@ -10,9 +10,10 @@ class GameJamSprite extends PIXI.Sprite {
     gridX;
     gridY;
     gridZ;
+    overlay;
 
     constructor(x, y, z, texture) {
-        super({texture: texture});
+        super(texture);
         this.anchor.set(0.5);
         this.gridToAbsolute(x, y, z);
 
@@ -21,6 +22,17 @@ class GameJamSprite extends PIXI.Sprite {
         this.gridZ = z;
 
         this.updateRenderingOrder();
+
+        // create overlay
+        this.overlay = new PIXI.Sprite(texture);
+        this.overlay.tint = 0xffffff; 
+        this.overlay.alpha = 0;
+
+        // align overlay
+        this.overlay.anchor.set(this.anchor.x, this.anchor.y);
+        this.overlay.position.set(0, 0);
+        this.overlay.width = this.width;
+        this.overlay.height = this.height;
     }
 
     /* Convert from grid coordinates to pixel coordinates and set `this.x` and `this.y` to the pixel coordinates */
@@ -43,6 +55,7 @@ class GameJamSprite extends PIXI.Sprite {
     /* Shortcut to `app.stage.addChild(this)` */
     render() {
         app.stage.addChild(this);
+        this.addChild(this.overlay);
     }
 
     /* Shortcut to `app.stage.removeChild(this)` */

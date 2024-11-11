@@ -2,12 +2,16 @@ import Block from './block.js';
 import GameJamSprite from "./gameJamSprite.js";
 import Interactable from './interactable.js';
 import Player from './player.js';
+import LightSource from './lightSource.js';
 
 /* Setup PixiJS application */
 export const app = new PIXI.Application();
 await app.init({background: '#FFFFFF', resizeTo: window});
 document.body.appendChild(app.canvas);
 export const eventEmitter = new PIXI.EventEmitter();
+
+const allBlocks = [];
+const allLightSources = [];
 
 /* Read in blocks and instantiate them */
 async function createBlocks(scene) {
@@ -37,6 +41,14 @@ async function createPlayer(playerIndex) { // TODO: Player selection?
     new Player(9, 9, 1, texture);
 }
 
+async function createLightSource() {
+    const texture = await PIXI.Assets.load('../resources/assets/blue_block.png');
+    const lightSource = new LightSource(9, 9, 1, texture);
+    lightSource.render();
+    lightSource.applyLight(allBlocks);
+    allLightSources.push(lightSource);
+}
+
 /* Read given JSON file and return data from given array */
 async function readJSON(fileName, array) {
     const jsonFile = await PIXI.Assets.load({src: `../resources/${fileName}`, loader: 'loadJson'});
@@ -58,8 +70,15 @@ export function tick() {
     app.stage.children.forEach(child => {
         if (child instanceof Block) {
             child.checkAbove(spriteMap);
+            child.changeFilter();
         }
     });
+    for (const lightSource of allLightSources) {
+        const players = app.stage.children.filter(child => child instanceof Player);
+        let pos = {x: players[0].x, y: players[0].y};
+        lightSource.updateLocation(pos.x, pos.y);
+        lightSource.applyLight(allBlocks);
+    }
 }
 
 /* ---------- Main Logic ---------- */
@@ -67,5 +86,6 @@ export function tick() {
     await createBlocks('test_screen');
     await createInteractables('test_screen');
     await createPlayer(0);
+    await createLightSource();
     tick();
 })();
