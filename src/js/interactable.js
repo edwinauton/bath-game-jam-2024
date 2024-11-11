@@ -72,13 +72,10 @@ class Interactable extends GameJamSprite {
 
     /* Check for a player in any adjacent tile */
     hasAdjacentPlayer() {
-        const players = app.stage.children.filter(child => child instanceof Player);
+        const player = app.stage.children.filter(child => child instanceof Player)[0];
         const playerMap = new Map();
-
-        players.forEach(player => {
-            const key = `${player.gridX},${player.gridY},${player.gridZ}`;  // Create keys to add to map
-            playerMap.set(key, player); // Create map of key (x,y,z) -> value (Player)
-        });
+        const key = `${player.gridX},${player.gridY},${player.gridZ}`;  // Create keys to add to map
+        playerMap.set(key, player); // Create map of key (x,y,z) -> value (Player)
 
         // Check all four adjacent tiles to this one
         const key1 = `${this.gridX + 1},${this.gridY},${this.gridZ}`; // Create key to search in map
