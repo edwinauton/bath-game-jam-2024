@@ -19,11 +19,7 @@ async function createBlocks(scene) {
 
     for (const block of blocks) {
         const texture = await PIXI.Assets.load(`../resources/assets/${block.texture}`);
-        const blockObject = new Block(block.x, block.y, block.z, texture);
-        blockObject.changeFilter();
-        blockObject.render();
-        blockObject.animate();
-        allBlocks.push(blockObject);
+        new Block(block.x, block.y, block.z, texture);
     }
 }
 
@@ -33,18 +29,16 @@ async function createInteractables(scene) {
 
     for (const interactable of interactables) {
         const texture = await PIXI.Assets.load(`../resources/assets/${interactable.texture}`);
-        const interactableObject = new Interactable(interactable.x, interactable.y, interactable.z, texture, interactable.label);
-        interactableObject.render();
-        interactableObject.animate();
+        new Interactable(interactable.x, interactable.y, interactable.z, texture, interactable.label);
     }
 }
 
 /* Read in player and instantiate it */
 async function createPlayer(playerIndex) { // TODO: Player selection?
     const player = (await readJSON('players.json', 'players'))[playerIndex];
+
     const texture = await PIXI.Assets.load(`../resources/assets/${player.texture}`);
-    const playerObject = new Player(9, 9, 1, texture);
-    playerObject.render();
+    new Player(9, 9, 1, texture);
 }
 
 async function createLightSource() {
@@ -68,10 +62,11 @@ export function tick() {
     app.stage.children.forEach(child => {
         if (child instanceof GameJamSprite) {
             const key = `${child.gridX},${child.gridY},${child.gridZ}`; // Create key for the sprite
-            spriteMap.set(key, child); // Add key to map
+            spriteMap.set(key, child); // Create map of key (x,y,z) -> value (GameJamSprite)
             child.updateRenderingOrder();
         }
     });
+
     app.stage.children.forEach(child => {
         if (child instanceof Block) {
             child.checkAbove(spriteMap);

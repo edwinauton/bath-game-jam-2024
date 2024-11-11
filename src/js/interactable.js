@@ -16,6 +16,9 @@ class Interactable extends GameJamSprite {
         super(x, y, z, texture);
 
         this.label = label;
+
+        this.render();
+        this.animate();
         this.addInteractivity();
     }
 
@@ -37,11 +40,13 @@ class Interactable extends GameJamSprite {
             createjs.Tween.get(label)
                 .to({alpha: 1}, 100, createjs.Ease.sineInOut); // Fade in
         });
+
         this.addEventListener('pointerleave', () => {
             createjs.Tween.get(label)
                 .to({alpha: 0}, 100, createjs.Ease.sineInOut) // Fade out
                 .call(() => app.stage.removeChild(label)); // Remove item label
         });
+
         this.addEventListener('click', () => {
             if (this.hasAdjacentPlayer()) {
                 createjs.Tween.get(label)
@@ -61,6 +66,7 @@ class Interactable extends GameJamSprite {
     hasAdjacentPlayer() {
         const players = app.stage.children.filter(child => child instanceof Player);
         const playerMap = new Map();
+
         players.forEach(player => {
             const key = `${player.gridX},${player.gridY},${player.gridZ}`;  // Create keys to add to map
             playerMap.set(key, player); // Create map of key (x,y,z) -> value (Player)
@@ -76,28 +82,26 @@ class Interactable extends GameJamSprite {
 
     createLabel() {
         const rectangle = new PIXI.Graphics();
-
         const text = new PIXI.Text({
             text: this.label, style: {
-                fontFamily: "Verdana, Geneva, sans-serif", fontSize: 16, fill: 0xFFFFFF
+                fontFamily: "Courier New", fontSize: 16, fill: 0xFFFFFF
             }
         });
-        text.anchor.set(0.5);
 
         const padding = 7;
         const width = text.width + 2 * padding;
         const height = text.height + 2 * padding;
 
+        text.anchor.set(0.5);
         text.x = width / 2;
         text.y = height / 2;
 
         rectangle.x = this.x - width / 2;
         rectangle.y = this.y - 45;
-        rectangle.roundRect(0, 0, width, height, 10).fill('0x000000A8');
-        rectangle.addChild(text);
-
+        rectangle.roundRect(0, 0, width, height, 7).fill('0x000000A8');
         rectangle.alpha = 0; // Start hidden
         rectangle.zIndex = Infinity; // Always on top
+        rectangle.addChild(text);
 
         return rectangle;
     }

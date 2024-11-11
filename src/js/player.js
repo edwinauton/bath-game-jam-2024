@@ -12,6 +12,8 @@ export class Player extends GameJamSprite {
         super(x, y, z, texture);
 
         eventEmitter.on('movePlayer', this.moveTo.bind(this));  // Run 'moveTo' when 'movePlayer' event triggers
+        
+        this.render();
     }
 
     /* Moves the player from their current position to a new block in calculated steps */
