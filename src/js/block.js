@@ -13,9 +13,11 @@ class Block extends GameJamSprite {
     constructor(x, y, z, texture) {
         super(x, y, z, texture);
         this.staticY = this.y;
+        this.defaultTint = 0x000000;
+        this.defaultAlpha = 0.5;
     }
 
-    changeFilter(tint, alpha) {
+    changeFilter(tint=this.defaultTint, alpha=this.defaultAlpha) {
         this.overlay.tint = tint; 
         this.overlay.alpha = alpha;
     }

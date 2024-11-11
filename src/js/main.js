@@ -2,12 +2,16 @@ import Block from './block.js';
 import GameJamSprite from "./gameJamSprite.js";
 import Interactable from './interactable.js';
 import Player from './player.js';
+import LightSource from './lightSource.js';
 
 /* Setup PixiJS application */
 export const app = new PIXI.Application();
 await app.init({background: '#FFFFFF', resizeTo: window});
 document.body.appendChild(app.canvas);
 export const eventEmitter = new PIXI.EventEmitter();
+
+const allBlocks = [];
+const allLightSources = [];
 
 /* Read in blocks and instantiate them */
 async function createBlocks(scene) {
@@ -16,7 +20,7 @@ async function createBlocks(scene) {
     for (const block of blocks) {
         const texture = await PIXI.Assets.load(`../resources/assets/${block.texture}`);
         const blockObject = new Block(block.x, block.y, block.z, texture);
-        blockObject.changeFilter(0x000000, 0.5)
+        blockObject.changeFilter();
         blockObject.render();
         blockObject.animate();
         allBlocks.push(blockObject);
@@ -35,46 +39,20 @@ async function createInteractables(scene) {
     }
 }
 
-/**
- * Checks if a point is within an ellipse.
- *
- * @param {Number} x - The x-coordinate of the point.
- * @param {Number} y - The y-coordinate of the point.
- * @param {Number} h - The x-coordinate of the ellipse's center.
- * @param {Number} k - The y-coordinate of the ellipse's center.
- * @param {Number} a - The horizontal radius of the ellipse.
- * @param {Number} b - The vertical radius of the ellipse.
- * @returns {Boolean} - Returns true if the point is within the ellipse, else false.
- */
-function isPointInEllipse(x, y, h, k, a, b) {
-    return ((Math.pow(x - h, 2) / Math.pow(a, 2)) +
-            (Math.pow(y - k, 2) / Math.pow(b, 2))) <= 1;
-}
-
-function get_blocks_in_ellipse(blocks, pos, radius) {
-    let in_radius = [];
-    for (const block of blocks) {
-        if (isPointInEllipse(block.x, block.y, pos.x, pos.y, radius, radius * 0.5)) {
-            in_radius.push(block)
-            console.log(`Position: ${pos.x}, ${pos.y}`);
-            console.log(`Block: ${block.x}, ${block.y}`);   
-        }
-    }
-    return in_radius
-}
-
-function set_tint_to_blocks(blocks, tint, alpha) {
-    for (const block of blocks) {
-        block.changeFilter(tint, alpha)
-    }
-} 
-
 /* Read in player and instantiate it */
 async function createPlayer(playerIndex) { // TODO: Player selection?
     const player = (await readJSON('players.json', 'players'))[playerIndex];
     const texture = await PIXI.Assets.load(`../resources/assets/${player.texture}`);
     const playerObject = new Player(9, 9, 1, texture);
     playerObject.render();
+}
+
+async function createLightSource() {
+    const texture = await PIXI.Assets.load('../resources/assets/blue_block.png');
+    const lightSource = new LightSource(9, 9, 1, texture);
+    lightSource.render();
+    lightSource.applyLight(allBlocks);
+    allLightSources.push(lightSource);
 }
 
 /* Read given JSON file and return data from given array */
@@ -97,15 +75,15 @@ export function tick() {
     app.stage.children.forEach(child => {
         if (child instanceof Block) {
             child.checkAbove(spriteMap);
+            child.changeFilter();
         }
     });
-
-    const players = app.stage.children.filter(child => child instanceof Player);
-    console.log(`Number of players: ${players}`);    
-    let pos = {x: players[0].x, y: players[0].y + players[0].height / 2};
-    const blocks = get_blocks_in_ellipse(allBlocks, pos, 100);
-    console.log(`Number of blocks retrieved: ${blocks.length}`);
-    set_tint_to_blocks(blocks, 0xffffff, 0.5);1000
+    for (const lightSource of allLightSources) {
+        const players = app.stage.children.filter(child => child instanceof Player);
+        let pos = {x: players[0].x, y: players[0].y};
+        lightSource.updateLocation(pos.x, pos.y);
+        lightSource.applyLight(allBlocks);
+    }
 }
 
 /* ---------- Main Logic ---------- */
@@ -113,5 +91,6 @@ export function tick() {
     await createBlocks('test_screen');
     await createInteractables('test_screen');
     await createPlayer(0);
+    await createLightSource();
     tick();
 })();
