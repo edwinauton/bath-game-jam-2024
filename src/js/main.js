@@ -32,6 +32,7 @@ async function createInteractables(scene) {
 /* Read in player and instantiate it */
 async function createPlayer(playerIndex) { // TODO: Player selection?
     const player = (await readJSON('players.json', 'players'))[playerIndex];
+
     const texture = await PIXI.Assets.load(`../resources/assets/${player.texture}`);
     new Player(9, 9, 1, texture);
 }
@@ -53,6 +54,7 @@ export function tick() {
             child.updateRenderingOrder();
         }
     });
+
     app.stage.children.forEach(child => {
         if (child instanceof Block) {
             child.checkAbove(spriteMap);

@@ -40,11 +40,13 @@ class Interactable extends GameJamSprite {
             createjs.Tween.get(label)
                 .to({alpha: 1}, 100, createjs.Ease.sineInOut); // Fade in
         });
+
         this.addEventListener('pointerleave', () => {
             createjs.Tween.get(label)
                 .to({alpha: 0}, 100, createjs.Ease.sineInOut) // Fade out
                 .call(() => app.stage.removeChild(label)); // Remove item label
         });
+
         this.addEventListener('click', () => {
             if (this.hasAdjacentPlayer()) {
                 createjs.Tween.get(label)
@@ -64,6 +66,7 @@ class Interactable extends GameJamSprite {
     hasAdjacentPlayer() {
         const players = app.stage.children.filter(child => child instanceof Player);
         const playerMap = new Map();
+
         players.forEach(player => {
             const key = `${player.gridX},${player.gridY},${player.gridZ}`;  // Create keys to add to map
             playerMap.set(key, player); // Create map of key (x,y,z) -> value (Player)

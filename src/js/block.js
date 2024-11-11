@@ -28,10 +28,12 @@ class Block extends GameJamSprite {
                     .to({y: this.staticY - (this.height / 10)}, 150, createjs.Ease.sineInOut);
             }
         });
+
         this.addEventListener('pointerleave', () => {
             createjs.Tween.get(this)
                 .to({y: this.staticY}, 150, createjs.Ease.sineInOut);
         });
+        
         this.addEventListener('click', () => {
             createjs.Tween.get(this)
                 .to({y: this.staticY}, 150, createjs.Ease.sineInOut);
