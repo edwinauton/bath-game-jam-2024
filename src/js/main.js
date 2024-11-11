@@ -14,9 +14,10 @@ class GameJamSprite extends PIXI.Sprite {
     gridX;
     gridY;
     gridZ;
+    overlay;
 
     constructor(x, y, z, texture) {
-        super({texture: texture});
+        super(texture);
         this.anchor.set(0.5);
         this.gridToAbsolute(x, y, z);
 
@@ -24,6 +25,17 @@ class GameJamSprite extends PIXI.Sprite {
         this.gridY = y;
         this.gridZ = z;
         this.updateRenderingOrder();
+        
+        // create overlay
+        this.overlay = new PIXI.Sprite(texture);
+        this.overlay.tint = 0xff0000; 
+        this.overlay.alpha = 0.5;
+
+        // align overlay
+        this.overlay.anchor.set(this.anchor.x, this.anchor.y);
+        this.overlay.position.set(0, 0);
+        this.overlay.width = this.width;
+        this.overlay.height = this.height;
     }
 
     /* Convert from grid coordinates to pixel coordinates */
@@ -46,6 +58,7 @@ class GameJamSprite extends PIXI.Sprite {
     /* Shortcut to app.stage.addChild(this) */
     render() {
         app.stage.addChild(this);
+        this.addChild(this.overlay);
     }
 }
 
@@ -61,6 +74,11 @@ class Block extends GameJamSprite {
     constructor(x, y, z, texture) {
         super(x, y, z, texture);
         this.staticY = this.y;
+    }
+
+    changeFilter(tint, alpha) {
+        this.overlay.tint = tint; 
+        this.overlay.alpha = alpha;
     }
 
     /* Add hover and click animations */
@@ -244,6 +262,7 @@ async function createBlocks(scene) {
     for (const block of blocks) {
         const texture = await PIXI.Assets.load(`../resources/assets/${block.texture}`);
         const blockObject = new Block(block.x, block.y, block.z, texture);
+        blockObject.changeFilter(0x00ff00, 0.5)
         blockObject.render();
         blockObject.animate();
     }
