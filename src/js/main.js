@@ -3,6 +3,7 @@ const app = new PIXI.Application();
 await app.init({background: '#FFFFFF', resizeTo: window});
 document.body.appendChild(app.canvas);
 const eventEmitter = new PIXI.EventEmitter();
+const allBlocks = [];
 
 /**
  *  @param {Number} x               grid x-coordinate for the sprite
@@ -28,8 +29,8 @@ class GameJamSprite extends PIXI.Sprite {
         
         // create overlay
         this.overlay = new PIXI.Sprite(texture);
-        this.overlay.tint = 0xff0000; 
-        this.overlay.alpha = 0.5;
+        this.overlay.tint = 0xffffff; 
+        this.overlay.alpha = 0;
 
         // align overlay
         this.overlay.anchor.set(this.anchor.x, this.anchor.y);
@@ -262,9 +263,10 @@ async function createBlocks(scene) {
     for (const block of blocks) {
         const texture = await PIXI.Assets.load(`../resources/assets/${block.texture}`);
         const blockObject = new Block(block.x, block.y, block.z, texture);
-        blockObject.changeFilter(0x00ff00, 0.5)
+        blockObject.changeFilter(0xffffff, 0)
         blockObject.render();
         blockObject.animate();
+        allBlocks.push(blockObject);
     }
 }
 
@@ -287,6 +289,27 @@ async function createInteractables(scene) {
         interactableObject.animate();
     }
 }
+
+function get_blocks_in_radius(blocks, pos, radius) {
+    let in_radius = [];
+    for (const block of blocks) {
+        if (block.x > pos.x - radius * 1.5 && 
+            block.x < pos.x + radius * 1.5  && 
+            block.y > pos.y - radius && 
+            block.y < pos.y + radius) {
+            in_radius.push(block)
+            console.log(`Position: ${pos.x}, ${pos.y}`);
+            console.log(`Block: ${block.x}, ${block.y}`);   
+        }
+    }
+    return in_radius
+}
+
+function set_tint_to_blocks(blocks, tint, alpha) {
+    for (const block of blocks) {
+        block.changeFilter(tint, alpha)
+    }
+} 
 
 /* Read given JSON file and return data from given array */
 async function readJSON(fileName, array) {
@@ -318,4 +341,11 @@ function tick() {
             child.checkAbove(spriteMap);
         }
     });
+
+    const players = app.stage.children.filter(child => child instanceof Player);
+    console.log(`Number of players: ${players}`);    
+    let pos = {x: players[0].x, y: players[0].y + players[0].height / 2};
+    const blocks = get_blocks_in_radius(allBlocks, pos, 30);
+    console.log(`Number of blocks retrieved: ${blocks.length}`);
+    set_tint_to_blocks(blocks, 0xff0000, 0.5);1000
 }
