@@ -1,5 +1,5 @@
 import GameJamSprite from "./gameJamSprite.js";
-import {app, eventEmitter, readSettings, tick} from "./main.js";
+import {eventEmitter, readSettings, tick} from "./main.js";
 
 /**
  *  @param {Number} x               grid x-coordinate for the block
@@ -49,16 +49,16 @@ class Block extends GameJamSprite {
 
                 switch (face) {
                     case 'top':
-                        app.stage.add(new Block(this.gridX, this.gridY, this.gridZ + 1, this.texture));
+                        new Block(this.gridX, this.gridY, this.gridZ + 1, this.texture);
                         break;
                     case 'left':
-                        app.stage.add(new Block(this.gridX, this.gridY + 1, this.gridZ, this.texture));
+                        new Block(this.gridX, this.gridY + 1, this.gridZ, this.texture);
                         break;
                     case 'right':
-                        app.stage.add(new Block(this.gridX + 1, this.gridY, this.gridZ, this.texture));
+                        new Block(this.gridX + 1, this.gridY, this.gridZ, this.texture);
                         break;
                 }
-                tick();
+                tick(true);
             }
         });
     }
@@ -87,7 +87,7 @@ class Block extends GameJamSprite {
 
         // Check which face is clicked by the pointer
         if (topFace.contains(localPoint.x, localPoint.y)) {
-            return 'top'
+            return 'top';
         } else if (leftFace.contains(localPoint.x, localPoint.y)) {
             return 'left';
         } else if (rightFace.contains(localPoint.x, localPoint.y)) {

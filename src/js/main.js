@@ -10,7 +10,6 @@ await app.init({background: '#FFFFFF', resizeTo: window});
 document.body.appendChild(app.canvas);
 
 export const eventEmitter = new PIXI.EventEmitter();
-export const buildMode = false;
 
 export async function readSettings(key) {
     return await readJSON('settings.json', key);
@@ -48,8 +47,8 @@ async function createPlayer(playerIndex) { // TODO: Player selection?
 /* Setup light source */
 async function createLightSource() {
     const texture = await PIXI.Assets.load('../resources/assets/red_block.png');
-    const players = app.stage.children.filter(child => child instanceof Player);
-    new LightSource(players[0].gridX, players[0].gridY, players[0].gridZ, texture);
+    const player = app.stage.children.filter(child => child instanceof Player)[0];
+    new LightSource(player.gridX, player.gridY, player.gridZ, texture);
 }
 
 /* Read given JSON file and return data from given array */
@@ -59,7 +58,7 @@ async function readJSON(fileName, array) {
 }
 
 /* Recalculate `zIndex` and run `checkAbove` for blocks */
-export function tick() {
+export function tick(buildMode = false) {
     const spriteMap = new Map();
 
     app.stage.children.forEach(child => {
@@ -67,7 +66,11 @@ export function tick() {
             const key = `${child.gridX},${child.gridY},${child.gridZ}`; // Create key for the sprite
             spriteMap.set(key, child); // Create map of key (x,y,z) -> value (GameJamSprite)
             child.updateRenderingOrder();
-            child.updateOverlay();
+            if (buildMode) {
+                child.updateOverlay(0, 0);
+            } else {
+                child.updateOverlay();
+            }
         }
     });
 
@@ -77,11 +80,11 @@ export function tick() {
         }
     });
 
-    const players = app.stage.children.filter(child => child instanceof Player);
+    const player = app.stage.children.filter(child => child instanceof Player)[0];
     app.stage.children.forEach(child => {
         if (child instanceof LightSource) {
-            child.x = players[0].x;
-            child.y = players[0].y;
+            child.x = player.x;
+            child.y = player.y;
             child.applyLight();
         }
     });
@@ -91,13 +94,13 @@ export function tick() {
 (async () => {
     const scene = await readSettings('level')
     await createBlocks(scene);
-
     if (!await readSettings('build_mode')) {
         await createInteractables(scene);
-        const player = await readSettings('player')
+        const player = await readSettings('player');
         await createPlayer(player);
         await createLightSource();
+        tick();
+    } else {
+        tick(true);
     }
-
-    tick();
 })();

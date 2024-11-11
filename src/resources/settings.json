@@ -1,7 +1,7 @@
 {
+  "build_mode": false,
   "level": "test_screen",
   "player": 0,
-  "build_mode": false,
   "player_spawn": {
     "x": 9,
     "y": 9,
