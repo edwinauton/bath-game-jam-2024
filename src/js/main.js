@@ -263,7 +263,7 @@ async function createBlocks(scene) {
     for (const block of blocks) {
         const texture = await PIXI.Assets.load(`../resources/assets/${block.texture}`);
         const blockObject = new Block(block.x, block.y, block.z, texture);
-        blockObject.changeFilter(0xffffff, 0)
+        blockObject.changeFilter(0x000000, 0.5)
         blockObject.render();
         blockObject.animate();
         allBlocks.push(blockObject);
@@ -290,13 +290,26 @@ async function createInteractables(scene) {
     }
 }
 
-function get_blocks_in_radius(blocks, pos, radius) {
+/**
+ * Checks if a point is within an ellipse.
+ *
+ * @param {Number} x - The x-coordinate of the point.
+ * @param {Number} y - The y-coordinate of the point.
+ * @param {Number} h - The x-coordinate of the ellipse's center.
+ * @param {Number} k - The y-coordinate of the ellipse's center.
+ * @param {Number} a - The horizontal radius of the ellipse.
+ * @param {Number} b - The vertical radius of the ellipse.
+ * @returns {Boolean} - Returns true if the point is within the ellipse, else false.
+ */
+function isPointInEllipse(x, y, h, k, a, b) {
+    return ((Math.pow(x - h, 2) / Math.pow(a, 2)) +
+            (Math.pow(y - k, 2) / Math.pow(b, 2))) <= 1;
+}
+
+function get_blocks_in_ellipse(blocks, pos, radius) {
     let in_radius = [];
     for (const block of blocks) {
-        if (block.x > pos.x - radius * 1.5 && 
-            block.x < pos.x + radius * 1.5  && 
-            block.y > pos.y - radius && 
-            block.y < pos.y + radius) {
+        if (isPointInEllipse(block.x, block.y, pos.x, pos.y, radius, radius * 0.5)) {
             in_radius.push(block)
             console.log(`Position: ${pos.x}, ${pos.y}`);
             console.log(`Block: ${block.x}, ${block.y}`);   
@@ -345,7 +358,7 @@ function tick() {
     const players = app.stage.children.filter(child => child instanceof Player);
     console.log(`Number of players: ${players}`);    
     let pos = {x: players[0].x, y: players[0].y + players[0].height / 2};
-    const blocks = get_blocks_in_radius(allBlocks, pos, 30);
+    const blocks = get_blocks_in_ellipse(allBlocks, pos, 100);
     console.log(`Number of blocks retrieved: ${blocks.length}`);
-    set_tint_to_blocks(blocks, 0xff0000, 0.5);1000
+    set_tint_to_blocks(blocks, 0xffffff, 0.5);1000
 }
