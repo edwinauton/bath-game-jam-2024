@@ -14,7 +14,7 @@ export class Player extends GameJamSprite {
         eventEmitter.on('movePlayer', this.moveTo.bind(this));  // Run 'moveTo' when 'movePlayer' event triggers
     }
 
-    /* Moves the player from their current position to a new block in calculated steps */
+    /* Moves the player from their current position to a new block in steps */
     moveTo(block) { // TODO: Check for z-levels and collisions
         if (!block.hasBlockAbove && block.gridZ === this.gridZ - 1) { // Only run for accessible blocks on this level
             createjs.Tween.removeTweens(this); // Stops ongoing Tweens for the player
@@ -38,7 +38,7 @@ export class Player extends GameJamSprite {
                         .to({x: absolute.x, y: absolute.y}, 150, createjs.Ease.sineInOut)
                         .call(animateStep);  // Continue loop
 
-                    tick(); // Update all rendering orders and blocks
+                    tick();
                 }
             }
             animateStep(); // Start loop

@@ -9,7 +9,7 @@ export const app = new PIXI.Application();
 await app.init({background: '#FFFFFF', resizeTo: window});
 document.body.appendChild(app.canvas);
 
-export const eventEmitter = new PIXI.EventEmitter();
+export const eventEmitter = new PIXI.EventEmitter(); // Global event system
 
 /* Return value for given key from `settings.json` */
 export async function readSettings(key) {
@@ -47,11 +47,10 @@ async function createPlayer(playerIndex) { // TODO: Player selection?
 
 /* Setup light source */
 async function createLightSources() {
-    const texture = await PIXI.Assets.load('../resources/assets/red_block.png');
-
-    const player = app.stage.children.filter(child => child instanceof Player)[0];
+    const player = app.stage.children.find(child => child instanceof Player);
     new LightSource(player, 40, 0x990000);
-    const interactable = app.stage.children.filter(child => child instanceof Interactable)[0];
+
+    const interactable = app.stage.children.find(child => child instanceof Interactable);
     new LightSource(interactable, 100, 0x99ff00);
 }
 
@@ -78,7 +77,7 @@ export function tick(buildMode = false) {
         }
     });
 
-    app.stage.children.forEach(child => {
+    app.stage.children.forEach(child => {  // Delayed actions
         if (child instanceof Block) {
             child.checkAbove(spriteMap);
         } else if (child instanceof LightSource) {

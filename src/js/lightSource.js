@@ -31,21 +31,20 @@ class LightSource extends PIXI.Sprite {
     /* Apply light to all blocks within an ellipse */
     applyLight() {
         const pos = {x: this.x, y: this.y + this.height / 2};
-        const lights = app.stage.children.filter(child => child instanceof LightSource);
 
-        app.stage.children.forEach(child => {
-            if (child instanceof GameJamSprite) {
-                if (this.isPointInEllipse(child.x, child.y, pos.x, pos.y, this.radius, 0.5 * this.radius)) {
-                    child.updateOverlay(0.5, this.tint, lights);
-                }
+        const lights = app.stage.children.filter(child => child instanceof LightSource);
+        const sprites = app.stage.children.filter(child => child instanceof GameJamSprite);
+
+        sprites.forEach(sprite => {
+            if (this.isPointInEllipse(sprite.x, sprite.y, pos.x, pos.y, this.radius, 0.5 * this.radius)) {
+                sprite.updateOverlay(0.5, this.tint, lights);
             }
-        })
+        });
     }
 
     /* Move light source and recalculate lighting */
     updateLighting() {
-        this.x = this.target.x;
-        this.y = this.target.y;
+        this.position.set(this.target.x, this.target.y);
         this.applyLight();
     }
 }

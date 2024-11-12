@@ -27,7 +27,7 @@ class GameJamSprite extends PIXI.Sprite {
         this.render();
     }
 
-    /* Setup overlay for this block */
+    /* Setup overlay for this block and render it */
     createOverlay() {
         this.overlay = new PIXI.Sprite(this.texture);
         this.overlay.anchor.set(this.anchor.x, this.anchor.y);
@@ -35,16 +35,11 @@ class GameJamSprite extends PIXI.Sprite {
         this.addChild(this.overlay);
     }
 
-    /* Update tint and alpha for the overlay */
-    updateOverlay(alpha = 0.5, tint = 0x000000, lights=[]) {
-        let lit = false;
-        lights.forEach(child => {
-            if (child.isPointInEllipse(this.x, this.y, child.x, child.y, child.radius, 0.5 * child.radius)) {
-                lit = true;
-            }
-        })
+    /* Update tint and alpha for `this.overlay` */
+    updateOverlay(alpha = 0.5, tint = 0x000000, lights = []) {
+        const isLit = lights.some(light => light.isPointInEllipse(this.x, this.y, light.x, light.y, light.radius, 0.5 * light.radius));
 
-        this.overlay.tint = lit ? this.mergeColor(tint) : tint; // Merge colours, or reset tint if not in radius of any light
+        this.overlay.tint = isLit ? this.mergeColor(tint) : tint; // Merge colours, or reset tint if not in radius of any light
         this.overlay.alpha = alpha;
     }
 
@@ -61,19 +56,17 @@ class GameJamSprite extends PIXI.Sprite {
         const mergedR = Math.min(0xFF, r1 + r2);
         const mergedG = Math.min(0xFF, g1 + g2);
         const mergedB = Math.min(0xFF, b1 + b2);
-
-        return (mergedR << 16) | (mergedG << 8) | mergedB;
+        return (mergedR << 16) | (mergedG << 8) | mergedB; // Convert integer to colour
     }
 
     /* Convert from grid coordinates to pixel coordinates and set `this.x` and `this.y` to the pixel coordinates */
     gridToAbsolute(x, y, z = 1) {
         const xCentre = app.screen.width / 2;  // Centre horizontally on-screen
-        this.x = (0.50 * x * this.width) - (0.50 * y * this.height) + xCentre;
-
         const yAlign = app.screen.height / 3;  // Align vertically on-screen
-        const zOffset = z * this.height / 2;
-        this.y = (0.25 * x * this.width) + (0.25 * y * this.height) + yAlign - zOffset;
+        const zOffset = z * this.height / 2; // Simulate z-dimension
 
+        this.x = (0.50 * x * this.width) - (0.50 * y * this.height) + xCentre;
+        this.y = (0.25 * x * this.width) + (0.25 * y * this.height) + yAlign - zOffset;
         return {x: this.x, y: this.y};
     }
 

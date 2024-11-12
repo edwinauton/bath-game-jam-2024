@@ -56,7 +56,7 @@ class Block extends GameJamSprite {
         this.hasBlockAbove = spriteMap.has(aboveKey); // Check if the key is in the map
     }
 
-    /* Add new block on clicked face */
+    /* Add a new block on clicked face */
     build(pointerPos) {
         const face = this.getClickedFace(pointerPos);
         let offset = {x: 0, y: 0, z: 0};
@@ -74,7 +74,7 @@ class Block extends GameJamSprite {
         }
 
         const block = new Block(this.gridX + offset.x, this.gridY + offset.y, this.gridZ + offset.z, this.texture);
-        console.log({x:block.gridX, y:block.gridY, z:block.gridZ, texture: "[color]_block.png"});
+        console.log({x: block.gridX, y: block.gridY, z: block.gridZ, texture: "[color]_block.png"}); // Output can be manually copied to JSON
         tick(true);
     }
 
@@ -82,11 +82,11 @@ class Block extends GameJamSprite {
     getClickedFace(localPoint) {
         // Define vertices of  isometric cube
         const top = {x: 0, y: -this.height / 2};
-        const topLeft = {x: -this.width/2, y: -this.height / 4};
-        const topRight = {x: this.width/2, y: -this.height / 4};
-        const bottomLeft = {x: -this.width/2, y: this.height / 4};
-        const bottomRight = {x: this.width/2, y: this.height / 4};
-        const centre = {x: 0 , y: 0};
+        const topLeft = {x: -this.width / 2, y: -this.height / 4};
+        const topRight = {x: this.width / 2, y: -this.height / 4};
+        const bottomLeft = {x: -this.width / 2, y: this.height / 4};
+        const bottomRight = {x: this.width / 2, y: this.height / 4};
+        const centre = {x: 0, y: 0};
         const bottom = {x: 0, y: this.height / 2};
 
         // Define faces in terms of points
@@ -94,7 +94,7 @@ class Block extends GameJamSprite {
         const leftFace = new PIXI.Polygon([new PIXI.Point(bottomLeft.x, bottomLeft.y), new PIXI.Point(topLeft.x, topLeft.y), new PIXI.Point(centre.x, centre.y), new PIXI.Point(bottom.x, bottom.y)]);
         const rightFace = new PIXI.Polygon([new PIXI.Point(bottom.x, bottom.y), new PIXI.Point(centre.x, centre.y), new PIXI.Point(topRight.x, topRight.y), new PIXI.Point(bottomRight.x, bottomRight.y)]);
 
-        // Check which face is clicked by the pointer
+        // Check which face contains the pointer
         if (topFace.contains(localPoint.x, localPoint.y)) {
             return 'top';
         } else if (leftFace.contains(localPoint.x, localPoint.y)) {
