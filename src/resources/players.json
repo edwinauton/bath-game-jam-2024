@@ -1,7 +1,6 @@
 {
   "players": [
     {
-      "Name": "Player 1",
       "texture": "blue_slab.png"
     }
   ]

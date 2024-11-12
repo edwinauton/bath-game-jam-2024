@@ -2,24 +2,24 @@ import GameJamSprite from './gameJamSprite.js';
 import {app} from "./main.js";
 
 /**
- *  @param {Number} x               grid x-coordinate for the block
- *  @param {Number} y               grid y-coordinate for the block
- *  @param {Number} z               grid z-coordinate for the block
- *  @param {Texture} texture        texture asset to be rendered for the block
+ *  @param {Number} target          target for light source to follow
+ *  @param {Number} radius          radius of light source
+ *  @param {Number} tint            tint colour of light source
  *  */
-class LightSource extends GameJamSprite {
+class LightSource extends PIXI.Sprite {
     radius;
     target;
 
-    constructor(target, texture, radius, tint) {
-        super(target.gridX, target.gridY, target.gridZ, texture);
+    constructor(target, radius, tint) {
+        super(target.texture);
 
         this.alpha = 0;
-        this.radius = radius;
         this.target = target;
+        this.radius = radius;
         this.tint = tint;
 
-        this.applyLight();
+        this.updateLighting();
+        app.stage.addChild(this);
     }
 
 
@@ -31,13 +31,20 @@ class LightSource extends GameJamSprite {
     /* Apply light to all blocks within an ellipse */
     applyLight() {
         const pos = {x: this.x, y: this.y + this.height / 2};
-        const sprites = app.stage.children.filter(child => child instanceof GameJamSprite);
         const lights = app.stage.children.filter(child => child instanceof LightSource);
-        for (const sprite of sprites) {
+        const sprites = app.stage.children.filter(child => child instanceof GameJamSprite);
+
+        sprites.forEach(sprite => {
             if (this.isPointInEllipse(sprite.x, sprite.y, pos.x, pos.y, this.radius, 0.5 * this.radius)) {
                 sprite.updateOverlay(0.5, this.tint, lights);
             }
-        }
+        });
+    }
+
+    /* Move light source and recalculate lighting */
+    updateLighting() {
+        this.position.set(this.target.x, this.target.y);
+        this.applyLight();
     }
 }
 

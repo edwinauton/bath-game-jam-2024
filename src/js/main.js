@@ -9,8 +9,9 @@ export const app = new PIXI.Application();
 await app.init({background: '#FFFFFF', resizeTo: window});
 document.body.appendChild(app.canvas);
 
-export const eventEmitter = new PIXI.EventEmitter();
+export const eventEmitter = new PIXI.EventEmitter(); // Global event system
 
+/* Return value for given key from `settings.json` */
 export async function readSettings(key) {
     return await readJSON('settings.json', key);
 }
@@ -46,12 +47,11 @@ async function createPlayer(playerIndex) { // TODO: Player selection?
 
 /* Setup light source */
 async function createLightSource() {
-    const texture = await PIXI.Assets.load('../resources/assets/red_block.png');
+    const player = app.stage.children.find(child => child instanceof Player);
+    new LightSource(player, 40, 0x990000);
 
-    const player = app.stage.children.filter(child => child instanceof Player)[0];
-    new LightSource(player, texture, 50, 0x0000ff);
-    const interactable = app.stage.children.filter(child => child instanceof Interactable)[0];
-    new LightSource(interactable, texture, 100, 0xff0000);
+    const interactable = app.stage.children.find(child => child instanceof Interactable);
+    new LightSource(interactable, 100, 0x99ff00);
 }
 
 /* Read given JSON file and return data from given array */
@@ -77,9 +77,11 @@ export function tick(buildMode = false) {
         }
     });
 
-    app.stage.children.forEach(child => {
+    app.stage.children.forEach(child => {  // Delayed actions
         if (child instanceof Block) {
             child.checkAbove(spriteMap);
+        } else if (child instanceof LightSource) {
+            child.updateLighting();
         }
     });
 
@@ -94,15 +96,17 @@ export function tick(buildMode = false) {
 
 /* ---------- Main Logic ---------- */
 (async () => {
-    const scene = await readSettings('level_name')
-    await createBlocks(scene);
-    if (!await readSettings('build_mode')) {
-        await createInteractables(scene);
-        const player = await readSettings('player_index');
-        await createPlayer(player);
-        await createLightSource();
-        tick();
-    } else {
-        tick(true);
+    const levelName = await readSettings('level_name');
+    const buildMode = await readSettings('build_mode');
+    const playerIndex = await readSettings('player_index');
+
+    await createBlocks(levelName);
+
+    if (!buildMode) {
+        await createInteractables(levelName);
+        await createPlayer(playerIndex);
+        await createLightSources();
     }
+
+    tick(buildMode);
 })();
