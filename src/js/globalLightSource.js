@@ -3,18 +3,21 @@ import {app} from "./main.js";
 import LightSource from "./lightSource.js";
 
 class GlobalLightSource extends LightSource {
-    constructor(texture, tint=0xffffff, alpha=0.5, on=false) {
-        super({gridX: 0, gridY: 0, gridZ: 0}, texture, 0, tint, alpha, on);   
+    constructor(texture, tint = 0xffffff, alpha, on) {
+        super(texture, 0, tint, alpha, on);
     }
 
     applyLight() {
         let alpha = 0;
-        if (this.onState) {
+        if (this.isOn) {
             alpha = this.alpha
         }
+        const lights = app.stage.children.filter(child => child instanceof LightSource);
         const sprites = app.stage.children.filter(child => child instanceof GameJamSprite);
-        this.updateTints(sprites, this.tint, alpha);
+        sprites.forEach(sprite => {
+            sprite.updateOverlay(alpha, this.tint, lights)
+        })
     }
-}   
+}
 
 export default GlobalLightSource;

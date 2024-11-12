@@ -7,17 +7,18 @@ import {app} from "./main.js";
  *  @param {Number} tint            tint colour of light source
  *  */
 class LightSource extends PIXI.Sprite {
+    isOn;
     radius;
     target;
 
-    constructor(target, radius, tint=0xFFFFFF, alpha=0.5, on=false) {
+    constructor(target, radius, tint = 0xFFFFFF, alpha = 0.5, isOn = false) {
         super(target.texture);
 
         this.alpha = alpha;
         this.target = target;
         this.radius = radius;
         this.tint = tint;
-        this.on = on;
+        this.isOn = isOn;
 
         this.updateLighting();
         app.stage.addChild(this);
@@ -30,9 +31,8 @@ class LightSource extends PIXI.Sprite {
 
     /* Apply light to all blocks within an ellipse */
     applyLight() {
-      
         let alpha = 0;
-        if (this.onState) {
+        if (this.isOn) {
             alpha = this.alpha
         } else {
             alpha = 0;
@@ -43,7 +43,7 @@ class LightSource extends PIXI.Sprite {
 
         sprites.forEach(sprite => {
             if (this.isPointInEllipse(sprite.x, sprite.y, pos.x, pos.y, this.radius, 0.5 * this.radius)) {
-                sprite.updateOverlay(0.5, this.tint, lights);
+                sprite.updateOverlay(alpha, this.tint, lights);
             }
         });
     }
