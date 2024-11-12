@@ -49,9 +49,9 @@ async function createLightSource() {
     const texture = await PIXI.Assets.load('../resources/assets/red_block.png');
 
     const player = app.stage.children.filter(child => child instanceof Player)[0];
-    new LightSource(player, texture, 50, 0xFFFFFF);
+    new LightSource(player, texture, 50, 0x0000ff);
     const interactable = app.stage.children.filter(child => child instanceof Interactable)[0];
-    new LightSource(interactable, texture, 100, 0XFFFFFF);
+    new LightSource(interactable, texture, 100, 0xff0000);
 }
 
 /* Read given JSON file and return data from given array */
@@ -70,7 +70,7 @@ export function tick(buildMode = false) {
             spriteMap.set(key, child); // Create map of key (x,y,z) -> value (GameJamSprite)
             child.updateRenderingOrder();
             if (buildMode) {
-                child.updateOverlay(0, 0);
+                child.updateOverlay(0);
             } else {
                 child.updateOverlay();
             }

@@ -28,13 +28,14 @@ class LightSource extends GameJamSprite {
         return ((Math.pow(x - h, 2) / Math.pow(a, 2)) + (Math.pow(y - k, 2) / Math.pow(b, 2))) <= 1;
     }
 
-    /* Return list of sprites within the ellipse */
+    /* Apply light to all blocks within an ellipse */
     applyLight() {
         const pos = {x: this.x, y: this.y + this.height / 2};
         const sprites = app.stage.children.filter(child => child instanceof GameJamSprite);
+        const lights = app.stage.children.filter(child => child instanceof LightSource);
         for (const sprite of sprites) {
             if (this.isPointInEllipse(sprite.x, sprite.y, pos.x, pos.y, this.radius, 0.5 * this.radius)) {
-                sprite.updateOverlay(this.tint, 0.5)
+                sprite.updateOverlay(0.5, this.tint, lights);
             }
         }
     }
