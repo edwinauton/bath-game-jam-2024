@@ -2,12 +2,18 @@ import Block from './block.js';
 import GameJamSprite from "./gameJamSprite.js";
 import Interactable from './interactable.js';
 import Player from './player.js';
+import LightSource from "./lightSource.js";
 
 /* Setup PixiJS application */
 export const app = new PIXI.Application();
 await app.init({background: '#FFFFFF', resizeTo: window});
 document.body.appendChild(app.canvas);
 export const eventEmitter = new PIXI.EventEmitter();
+
+/* Return value for given key from `settings.json` */
+export async function readSettings(key) {
+    return await readJSON('settings.json', key);
+}
 
 /* Read in blocks and instantiate them */
 async function createBlocks(scene) {
@@ -34,7 +40,18 @@ async function createPlayer(playerIndex) { // TODO: Player selection?
     const player = (await readJSON('players.json', 'players'))[playerIndex];
 
     const texture = await PIXI.Assets.load(`../resources/assets/${player.texture}`);
-    new Player(9, 9, 1, texture);
+    const spawnLocation = await readSettings('player_spawn');
+    new Player(spawnLocation.x, spawnLocation.y, spawnLocation.z, texture);
+}
+
+/* Setup light source */
+async function createLightSources() {
+    const texture = await PIXI.Assets.load('../resources/assets/red_block.png');
+
+    const player = app.stage.children.filter(child => child instanceof Player)[0];
+    new LightSource(player, texture, 40, 0x990000);
+    const interactable = app.stage.children.filter(child => child instanceof Interactable)[0];
+    new LightSource(interactable, texture, 100, 0x99ff00);
 }
 
 /* Read given JSON file and return data from given array */
@@ -58,14 +75,25 @@ export function tick() {
     app.stage.children.forEach(child => {
         if (child instanceof Block) {
             child.checkAbove(spriteMap);
+        } else if (child instanceof LightSource) {
+            child.updateLighting();
         }
     });
 }
 
 /* ---------- Main Logic ---------- */
 (async () => {
-    await createBlocks('test_screen');
-    await createInteractables('test_screen');
-    await createPlayer(0);
-    tick();
+    const levelName = await readSettings('level_name')
+    const buildMode = await readSettings('build_mode')
+    const playerIndex = await readSettings('player_index');
+
+    await createBlocks(levelName);
+
+    if (!buildMode) {
+        await createInteractables(levelName);
+        await createPlayer(playerIndex);
+        await createLightSources();
+    }
+
+    tick(buildMode)
 })();

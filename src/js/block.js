@@ -1,5 +1,5 @@
 import GameJamSprite from "./gameJamSprite.js";
-import {app, eventEmitter} from "./main.js";
+import {app, eventEmitter, tick} from "./main.js";
 
 /**
  *  @param {Number} x               grid x-coordinate for the block
@@ -60,6 +60,8 @@ class Block extends GameJamSprite {
                         break;
                 }
                 tick();
+                const pointerPos = event.data.getLocalPosition(this);
+                this.build(pointerPos);
             }
         });
     }
@@ -70,7 +72,30 @@ class Block extends GameJamSprite {
         this.hasBlockAbove = spriteMap.has(aboveKey); // Check if the key is in the map
     }
 
-    getClickedFace(localPoint){
+    /* Add new block on clicked face */
+    build(pointerPos) {
+        const face = this.getClickedFace(pointerPos);
+        let offset = {x: 0, y: 0, z: 0}
+
+        switch (face) {
+            case 'top':
+                offset.z = 1;
+                break;
+            case 'left':
+                offset.y = 1;
+                break;
+            case 'right':
+                offset.x = 1;
+                break;
+        }
+
+        const block = new Block(this.gridX + offset.x, this.gridY + offset.y, this.gridZ + offset.z, this.texture);
+        console.log({x:block.gridX, y:block.gridY, z:block.gridZ, texture: "[color]_block.png"});
+        tick(true);
+    }
+
+    /* Return which face was clicked */
+    getClickedFace(localPoint) {
         // Define vertices of  isometric cube
         const top = {x: 0, y: -this.height / 2};
         const topLeft = {x: -this.width/2, y: -this.height / 4};
