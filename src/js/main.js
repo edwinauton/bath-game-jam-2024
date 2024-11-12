@@ -50,10 +50,10 @@ async function createPlayer() {
 /* Setup light source */
 async function createLightSources() {
     const player = app.stage.children.find(child => child instanceof Player);
-    new LightSource(player, 40, 0x990000);
+    new LightSource(player, 40, player.tint);
 
     const interactable = app.stage.children.find(child => child instanceof Interactable && child.label === 'Flashlight');
-    new LightSource(interactable, 100, 0x99ff00);
+    new LightSource(interactable, 100, Math.random() * 0xFFFFFF);
 }
 
 /* Read given JSON file and return data from given array */
