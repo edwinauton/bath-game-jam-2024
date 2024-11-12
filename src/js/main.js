@@ -46,7 +46,7 @@ async function createPlayer(playerIndex) { // TODO: Player selection?
 }
 
 /* Setup light source */
-async function createLightSource() {
+async function createLightSources() {
     const player = app.stage.children.find(child => child instanceof Player);
     new LightSource(player, 40, 0x990000);
 
@@ -82,14 +82,6 @@ export function tick(buildMode = false) {
             child.checkAbove(spriteMap);
         } else if (child instanceof LightSource) {
             child.updateLighting();
-        }
-    });
-
-    app.stage.children.forEach(child => {
-        if (child instanceof LightSource) {
-            child.x = child.target.x;
-            child.y = child.target.y;
-            child.applyLight();
         }
     });
 }
