@@ -56,9 +56,9 @@ async function createFlashlight() {
 
 /* Instantiate Light Switch */
 async function createLightSwitch() {
-    const texture = await PIXI.Assets.load('src/resources/assets/blue_block.png');
+    const texture = await PIXI.Assets.load('src/resources/assets/switch_ne.png');
     const light = new GlobalLightSource(0x333333);
-    new LightSwitch(10, 10, 1, texture, light);
+    new LightSwitch(10, 1, 1, texture, light);
 }
 
 /* Read given JSON file and return data from given array */
