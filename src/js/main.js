@@ -47,13 +47,13 @@ async function createPlayer() {
     player.tint = players[playerIndex].tint;
 }
 
-/* Setup light source */
+/* Setup light sources for flashlight and player */ // TODO: Generalise instantiating light sources
 async function createLightSources() {
     const player = app.stage.children.find(child => child instanceof Player);
-    new LightSource(player, 40, player.tint);
+    new LightSource(player, 40, player.tint); // Set player light colour to player colour
 
     const interactable = app.stage.children.find(child => child instanceof Interactable && child.label === 'Flashlight');
-    new LightSource(interactable, 100, Math.random() * 0xFFFFFF);
+    new LightSource(interactable, 100, (Math.random() * 0xFFFFFF)); // Randomise flashlight colour
 }
 
 /* Read given JSON file and return data from given array */
@@ -67,12 +67,12 @@ function tick(buildMode = false) {
     const spriteMap = new Map();
 
     app.stage.children.forEach(child => {
-        if (child instanceof GameJamSprite) {
+        if (child instanceof GameJamSprite) { // Initial actions
             const key = `${child.gridX},${child.gridY},${child.gridZ}`; // Create key for the sprite
             spriteMap.set(key, child); // Create map of key (x,y,z) -> value (GameJamSprite)
             child.updateRenderingOrder();
             if (buildMode) {
-                child.updateOverlay(0);
+                child.updateOverlay(0); // Hide overlays
             } else {
                 child.updateOverlay();
             }
