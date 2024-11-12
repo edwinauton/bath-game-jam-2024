@@ -1,4 +1,4 @@
-import {eventEmitter, tick} from './main.js';
+import {eventEmitter} from './main.js';
 import GameJamSprite from "./gameJamSprite.js";
 
 /**
@@ -37,8 +37,6 @@ export class Player extends GameJamSprite {
                     createjs.Tween.get(this)
                         .to({x: absolute.x, y: absolute.y}, 100, createjs.Ease.sineInOut)
                         .call(animateStep);  // Continue loop
-
-                    tick();
                 }
             }
             animateStep(); // Start loop

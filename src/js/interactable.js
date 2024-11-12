@@ -1,4 +1,4 @@
-import {app, tick} from "./main.js";
+import {app} from "./main.js";
 import Player from "./player.js";
 import GameJamSprite from "./gameJamSprite.js";
 import LightSource from "./lightSource.js";
@@ -63,8 +63,6 @@ class Interactable extends GameJamSprite {
                         child.target = player; // Set light to follow player
                     }
                 })
-
-                tick();
             }
         });
     }

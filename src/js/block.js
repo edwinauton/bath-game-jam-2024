@@ -1,5 +1,5 @@
 import GameJamSprite from "./gameJamSprite.js";
-import {eventEmitter, readSettings, tick} from "./main.js";
+import {eventEmitter, readSettings} from "./main.js";
 
 /**
  *  @param {Number} x               grid x-coordinate for the block
@@ -75,7 +75,6 @@ class Block extends GameJamSprite {
 
         const block = new Block(this.gridX + offset.x, this.gridY + offset.y, this.gridZ + offset.z, this.texture);
         console.log({x: block.gridX, y: block.gridY, z: block.gridZ, texture: "[color]_block.png"}); // Output can be manually copied to JSON
-        tick(true);
     }
 
     /* Return which face was clicked */

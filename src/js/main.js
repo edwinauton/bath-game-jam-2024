@@ -61,7 +61,7 @@ async function readJSON(fileName, array) {
 }
 
 /* Recalculate `zIndex` and run `checkAbove` for blocks */
-export function tick(buildMode = false) {
+function tick(buildMode = false) {
     const spriteMap = new Map();
 
     app.stage.children.forEach(child => {
@@ -100,5 +100,5 @@ export function tick(buildMode = false) {
         await createLightSources();
     }
 
-    tick(buildMode);
+    app.ticker.add(() => tick(buildMode));
 })();
