@@ -10,8 +10,9 @@ export const app = new PIXI.Application();
 await app.init({background: '#FFFFFF', resizeTo: window});
 document.body.appendChild(app.canvas);
 
-export const eventEmitter = new PIXI.EventEmitter();
+export const eventEmitter = new PIXI.EventEmitter(); // Global event system
 
+/* Return value for given key from `settings.json` */
 export async function readSettings(key) {
     return await readJSON('settings.json', key);
 }
@@ -21,7 +22,7 @@ async function createBlocks(scene) {
     const blocks = await readJSON('blocks.json', scene);
 
     for (const block of blocks) {
-        const texture = await PIXI.Assets.load(`../resources/assets/${block.texture}`);
+        const texture = await PIXI.Assets.load(`src/resources/assets/${block.texture}`);
         new Block(block.x, block.y, block.z, texture);
     }
 }
@@ -31,28 +32,29 @@ async function createInteractables(scene) {
     const interactables = await readJSON('interactables.json', scene);
 
     for (const interactable of interactables) {
-        const texture = await PIXI.Assets.load(`../resources/assets/${interactable.texture}`);
+        const texture = await PIXI.Assets.load(`src/resources/assets/${interactable.texture}`);
         new Interactable(interactable.x, interactable.y, interactable.z, texture, interactable.label);
     }
 }
 
 /* Read in player and instantiate it */
-async function createPlayer(playerIndex) { // TODO: Player selection?
-    const player = (await readJSON('players.json', 'players'))[playerIndex];
-
-    const texture = await PIXI.Assets.load(`../resources/assets/${player.texture}`);
+async function createPlayer() {
+    const playerIndex = await readSettings('player_index');
     const spawnLocation = await readSettings('player_spawn');
-    new Player(spawnLocation.x, spawnLocation.y, spawnLocation.z, texture);
+    const players = await readJSON('players.json', 'players');
+    const texture = await PIXI.Assets.load(`src/resources/assets/${players[playerIndex].texture}`);
+
+    const player = new Player(spawnLocation.x, spawnLocation.y, spawnLocation.z, texture);
+    player.tint = players[playerIndex].tint;
 }
 
-/* Setup light source */
-async function createLightSource() {
-    const texture = await PIXI.Assets.load('../resources/assets/red_block.png');
+/* Setup light sources for flashlight and player */ // TODO: Generalise instantiating light sources
+async function createLightSources() {
+    const player = app.stage.children.find(child => child instanceof Player);
+    new LightSource(player, 40, player.tint); // Set player light colour to player colour
 
-    const player = app.stage.children.filter(child => child instanceof Player)[0];
-    new LightSource(player, texture, 50);
-    const interactable = app.stage.children.filter(child => child instanceof Interactable)[0];
-    new LightSource(interactable, texture, 100);
+    const interactable = app.stage.children.find(child => child instanceof Interactable && child.label === 'Flashlight');
+    new LightSource(interactable, 100, (Math.random() * 0xFFFFFF)); // Randomise flashlight colour
 }
 
 /* Instantiate Light Switch */
@@ -64,54 +66,49 @@ async function createLightSwitch() {
 
 /* Read given JSON file and return data from given array */
 async function readJSON(fileName, array) {
-    const jsonFile = await PIXI.Assets.load({src: `../resources/${fileName}`, loader: 'loadJson'});
+    const jsonFile = await PIXI.Assets.load({src: `src/resources/${fileName}`, loader: 'loadJson'});
     return jsonFile[array];
 }
 
 /* Recalculate `zIndex` and run `checkAbove` for blocks */
-export function tick(buildMode = false) {
+function tick(buildMode = false) {
     const spriteMap = new Map();
 
     app.stage.children.forEach(child => {
-        if (child instanceof GameJamSprite) {
+        if (child instanceof GameJamSprite) { // Initial actions
             const key = `${child.gridX},${child.gridY},${child.gridZ}`; // Create key for the sprite
             spriteMap.set(key, child); // Create map of key (x,y,z) -> value (GameJamSprite)
             child.updateRenderingOrder();
             if (buildMode) {
-                child.updateOverlay(0, 0);
+                child.updateOverlay(0); // Hide overlays
             } else {
                 child.updateOverlay();
             }
         }
     });
 
-    app.stage.children.forEach(child => {
+    app.stage.children.forEach(child => {  // Delayed actions
         if (child instanceof Block) {
             child.checkAbove(spriteMap);
-        }
-    });
-
-    app.stage.children.forEach(child => {
-        if (child instanceof LightSource) {
-            child.x = child.target.x;
-            child.y = child.target.y;
-            child.applyLight();
+        } else if (child instanceof LightSource) {
+            child.updateLighting();
         }
     });
 }
 
 /* ---------- Main Logic ---------- */
 (async () => {
-    const scene = await readSettings('level_name')
-    await createBlocks(scene);
-    if (!await readSettings('build_mode')) {
-        await createInteractables(scene);
-        const player = await readSettings('player_index');
-        await createPlayer(player);
-        await createLightSource();
-        await createLightSwitch();
-        tick();
-    } else {
-        tick(true);
+    const levelName = await readSettings('level_name');
+    const buildMode = await readSettings('build_mode');
+    const playerIndex = await readSettings('player_index');
+
+    await createBlocks(levelName);
+
+    if (!buildMode) {
+        await createInteractables(levelName);
+        await createPlayer(playerIndex);
+        await createLightSources();
     }
+
+    app.ticker.add(() => tick(buildMode));
 })();

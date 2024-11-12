@@ -1,5 +1,5 @@
 import GameJamSprite from "./gameJamSprite.js";
-import {eventEmitter, readSettings, tick} from "./main.js";
+import {eventEmitter, readSettings} from "./main.js";
 
 /**
  *  @param {Number} x               grid x-coordinate for the block
@@ -42,23 +42,10 @@ class Block extends GameJamSprite {
                 eventEmitter.emit('movePlayer', this);
             }
 
-            const buildMode = await readSettings('build_mode')
+            const buildMode = await readSettings('build_mode');
             if (buildMode) {
-                const localPoint = event.data.getLocalPosition(this);
-                const face = this.getClickedFace(localPoint);
-
-                switch (face) {
-                    case 'top':
-                        new Block(this.gridX, this.gridY, this.gridZ + 1, this.texture);
-                        break;
-                    case 'left':
-                        new Block(this.gridX, this.gridY + 1, this.gridZ, this.texture);
-                        break;
-                    case 'right':
-                        new Block(this.gridX + 1, this.gridY, this.gridZ, this.texture);
-                        break;
-                }
-                tick(true);
+                const pointerPos = event.data.getLocalPosition(this);
+                this.build(pointerPos);
             }
         });
     }
@@ -67,6 +54,27 @@ class Block extends GameJamSprite {
     checkAbove(spriteMap) {
         const aboveKey = `${this.gridX},${this.gridY},${this.gridZ + 1}`; // Create the key for the above block
         this.hasBlockAbove = spriteMap.has(aboveKey); // Check if the key is in the map
+    }
+
+    /* Add a new block on clicked face */
+    build(pointerPos) {
+        const face = this.getClickedFace(pointerPos);
+        let offset = {x: 0, y: 0, z: 0};
+
+        switch (face) {
+            case 'top':
+                offset.z = 1;
+                break;
+            case 'left':
+                offset.y = 1;
+                break;
+            case 'right':
+                offset.x = 1;
+                break;
+        }
+
+        const block = new Block(this.gridX + offset.x, this.gridY + offset.y, this.gridZ + offset.z, this.texture);
+        console.log({x: block.gridX, y: block.gridY, z: block.gridZ, texture: "[color]_block.png"}); // Output can be manually copied to JSON
     }
 
     /* Return which face was clicked */
@@ -85,7 +93,7 @@ class Block extends GameJamSprite {
         const leftFace = new PIXI.Polygon([new PIXI.Point(bottomLeft.x, bottomLeft.y), new PIXI.Point(topLeft.x, topLeft.y), new PIXI.Point(centre.x, centre.y), new PIXI.Point(bottom.x, bottom.y)]);
         const rightFace = new PIXI.Polygon([new PIXI.Point(bottom.x, bottom.y), new PIXI.Point(centre.x, centre.y), new PIXI.Point(topRight.x, topRight.y), new PIXI.Point(bottomRight.x, bottomRight.y)]);
 
-        // Check which face is clicked by the pointer
+        // Check which face contains the pointer
         if (topFace.contains(localPoint.x, localPoint.y)) {
             return 'top';
         } else if (leftFace.contains(localPoint.x, localPoint.y)) {

@@ -1,4 +1,4 @@
-import {eventEmitter, tick} from './main.js';
+import {eventEmitter} from './main.js';
 import GameJamSprite from "./gameJamSprite.js";
 
 /**
@@ -14,7 +14,7 @@ export class Player extends GameJamSprite {
         eventEmitter.on('movePlayer', this.moveTo.bind(this));  // Run 'moveTo' when 'movePlayer' event triggers
     }
 
-    /* Moves the player from their current position to a new block in calculated steps */
+    /* Moves the player from their current position to a new block in steps */
     moveTo(block) { // TODO: Check for z-levels and collisions
         if (!block.hasBlockAbove && block.gridZ === this.gridZ - 1) { // Only run for accessible blocks on this level
             createjs.Tween.removeTweens(this); // Stops ongoing Tweens for the player
@@ -35,10 +35,8 @@ export class Player extends GameJamSprite {
 
                     const absolute = this.gridToAbsolute(this.gridX, this.gridY);
                     createjs.Tween.get(this)
-                        .to({x: absolute.x, y: absolute.y}, 150, createjs.Ease.sineInOut)
+                        .to({x: absolute.x, y: absolute.y}, 100, createjs.Ease.sineInOut)
                         .call(animateStep);  // Continue loop
-
-                    tick(); // Update all rendering orders and blocks
                 }
             }
             animateStep(); // Start loop

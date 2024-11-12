@@ -2,44 +2,25 @@ import GameJamSprite from './gameJamSprite.js';
 import {app} from "./main.js";
 
 /**
- *  @param {Number} x               grid x-coordinate for the block
- *  @param {Number} y               grid y-coordinate for the block
- *  @param {Number} z               grid z-coordinate for the block
- *  @param {Texture} texture        texture asset to be rendered for the block
+ *  @param {Number} target          target for light source to follow
+ *  @param {Number} radius          radius of light source
+ *  @param {Number} tint            tint colour of light source
  *  */
-class LightSource extends GameJamSprite {
+class LightSource extends PIXI.Sprite {
     radius;
     target;
 
-    constructor(target, texture, radius, tint=0xffffff, alpha=0.5, on=false) {
-        super(target.gridX, target.gridY, target.gridZ, texture);
+    constructor(target, radius, tint=0xFFFFFF, alpha=0.5, on=false) {
+        super(target.texture);
 
         this.alpha = alpha;
-        this.radius = radius;
         this.target = target;
+        this.radius = radius;
         this.tint = tint;
-        this.alpha = alpha;
-        this.onState = on;
-    }
+        this.on = on;
 
-    /* Update block tints to illuminate blocks */
-    applyLight() {
-        let alpha = 0;
-        if (this.onState) {
-            alpha = this.alpha
-        } else {
-            alpha = 0;
-        }
-        const sprites = this.getSpritesInEllipse();
-        this.updateTints(sprites, this.tint, alpha);
-    }
-
-    setOnState(newState) {
-        this.onState = newState;
-    }
-
-    getOnState() {
-        return this.onState;
+        this.updateLighting();
+        app.stage.addChild(this);
     }
 
     /* Return if `(x,y)` is in the calculated ellipse */
@@ -47,24 +28,30 @@ class LightSource extends GameJamSprite {
         return ((Math.pow(x - h, 2) / Math.pow(a, 2)) + (Math.pow(y - k, 2) / Math.pow(b, 2))) <= 1;
     }
 
-    /* Return list of sprites within the ellipse */
-    getSpritesInEllipse() {
-        const sprites_in_radius = [];
-        const pos = {x: this.x, y: this.y + this.height / 2};
-        const sprites = app.stage.children.filter(child => child instanceof GameJamSprite);
-        for (const sprite of sprites) {
-            if (this.isPointInEllipse(sprite.x, sprite.y, pos.x, pos.y, this.radius, 0.5 * this.radius)) {
-                sprites_in_radius.push(sprite);
-            }
+    /* Apply light to all blocks within an ellipse */
+    applyLight() {
+      
+        let alpha = 0;
+        if (this.onState) {
+            alpha = this.alpha
+        } else {
+            alpha = 0;
         }
-        return sprites_in_radius;
+        const pos = {x: this.x, y: this.y + this.height / 2};
+        const lights = app.stage.children.filter(child => child instanceof LightSource);
+        const sprites = app.stage.children.filter(child => child instanceof GameJamSprite);
+
+        sprites.forEach(sprite => {
+            if (this.isPointInEllipse(sprite.x, sprite.y, pos.x, pos.y, this.radius, 0.5 * this.radius)) {
+                sprite.updateOverlay(0.5, this.tint, lights);
+            }
+        });
     }
 
-    /* For each given sprite, update the tint */
-    updateTints(sprites, tint, alpha) {
-        for (const sprite of sprites) {
-            sprite.updateOverlay(tint, alpha);
-        }
+    /* Move light source and recalculate lighting */
+    updateLighting() {
+        this.position.set(this.target.x, this.target.y);
+        this.applyLight();
     }
 }
 
