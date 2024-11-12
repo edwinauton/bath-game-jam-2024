@@ -35,7 +35,7 @@ export class Player extends GameJamSprite {
 
                     const absolute = this.gridToAbsolute(this.gridX, this.gridY);
                     createjs.Tween.get(this)
-                        .to({x: absolute.x, y: absolute.y}, 150, createjs.Ease.sineInOut)
+                        .to({x: absolute.x, y: absolute.y}, 100, createjs.Ease.sineInOut)
                         .call(animateStep);  // Continue loop
 
                     tick();
