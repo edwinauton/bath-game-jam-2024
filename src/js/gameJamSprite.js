@@ -28,9 +28,36 @@ class GameJamSprite extends PIXI.Sprite {
     }
 
     /* Update tint and alpha for the overlay */
-    updateOverlay(tint = 0x000000, alpha = 0.5) {
-        this.overlay.tint = tint;
+    updateOverlay(alpha = 0.5, tint = 0x000000, lights=[]) {
+        let lit = false;
+        for (const light of lights) {
+            if (light.isPointInEllipse(this.x, this.y, light.x, light.y, light.radius, 0.5 * light.radius)){
+                lit = true;
+            }
+        }
+        if (lit) {
+            this.overlay.tint = this.mergeColors(this.overlay.tint, tint)
+        } else {
+            this.overlay.tint = tint;
+        }
+
         this.overlay.alpha = alpha;
+    }
+
+    mergeColors(color1, color2) {
+        const r1 = (color1 >> 16) & 0xFF;
+        const g1 = (color1 >> 8) & 0xFF;
+        const b1 = color1 & 0xFF;
+
+        const r2 = (color2 >> 16) & 0xFF;
+        const g2 = (color2 >> 8) & 0xFF;
+        const b2 = color2 & 0xFF;
+
+        const mergedR = Math.min(0xFF, r1 + r2);
+        const mergedG = Math.min(0xFF, g1 + g2);
+        const mergedB = Math.min(0xFF, b1 + b2);
+
+        return (mergedR << 16) | (mergedG << 8) | mergedB;
     }
 
     /* Convert from grid coordinates to pixel coordinates and set `this.x` and `this.y` to the pixel coordinates */
@@ -49,6 +76,7 @@ class GameJamSprite extends PIXI.Sprite {
     createOverlay() {
         this.overlay = new PIXI.Sprite(this.texture);
         this.overlay.anchor.set(this.anchor.x, this.anchor.y);
+        this.overlay.tint = 0x000000;
     }
 
     /* Update `this.zIndex` */
