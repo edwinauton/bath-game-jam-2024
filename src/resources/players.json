@@ -1,7 +1,16 @@
 {
   "players": [
     {
-      "texture": "blue_slab.png"
+      "texture": "grey_slab.png",
+      "tint": "#FF0000"
+    },
+    {
+      "texture": "grey_slab.png",
+      "tint": "#00FF00"
+    },
+    {
+      "texture": "grey_slab.png",
+      "tint": "#0000FF"
     }
   ]
 }

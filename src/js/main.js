@@ -37,12 +37,14 @@ async function createInteractables(scene) {
 }
 
 /* Read in player and instantiate it */
-async function createPlayer(playerIndex) { // TODO: Player selection?
-    const player = (await readJSON('players.json', 'players'))[playerIndex];
-
-    const texture = await PIXI.Assets.load(`../resources/assets/${player.texture}`);
+async function createPlayer() {
+    const playerIndex = await readSettings('player_index');
     const spawnLocation = await readSettings('player_spawn');
-    new Player(spawnLocation.x, spawnLocation.y, spawnLocation.z, texture);
+    const players = await readJSON('players.json', 'players');
+    const texture = await PIXI.Assets.load(`../resources/assets/${players[playerIndex].texture}`);
+
+    const player = new Player(spawnLocation.x, spawnLocation.y, spawnLocation.z, texture);
+    player.tint = players[playerIndex].tint;
 }
 
 /* Setup light source */
