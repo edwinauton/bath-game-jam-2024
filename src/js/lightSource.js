@@ -2,17 +2,16 @@ import GameJamSprite from './gameJamSprite.js';
 import {app} from "./main.js";
 
 /**
- *  @param {Number} x               grid x-coordinate for the block
- *  @param {Number} y               grid y-coordinate for the block
- *  @param {Number} z               grid z-coordinate for the block
- *  @param {Texture} texture        texture asset to be rendered for the block
+ *  @param {Number} target          target for light source to follow
+ *  @param {Number} radius          radius of light source
+ *  @param {Number} tint            tint colour of light source
  *  */
 class LightSource extends PIXI.Sprite {
     radius;
     target;
 
-    constructor(target, texture, radius, tint) {
-        super(texture);
+    constructor(target, radius, tint) {
+        super(target.texture);
 
         this.alpha = 0;
         this.target = target;
@@ -33,6 +32,7 @@ class LightSource extends PIXI.Sprite {
     applyLight() {
         const pos = {x: this.x, y: this.y + this.height / 2};
         const lights = app.stage.children.filter(child => child instanceof LightSource);
+
         app.stage.children.forEach(child => {
             if (child instanceof GameJamSprite) {
                 if (this.isPointInEllipse(child.x, child.y, pos.x, pos.y, this.radius, 0.5 * this.radius)) {
@@ -42,6 +42,7 @@ class LightSource extends PIXI.Sprite {
         })
     }
 
+    /* Move light source and recalculate lighting */
     updateLighting() {
         this.x = this.target.x;
         this.y = this.target.y;

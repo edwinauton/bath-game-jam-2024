@@ -8,6 +8,7 @@ import LightSource from "./lightSource.js";
 export const app = new PIXI.Application();
 await app.init({background: '#FFFFFF', resizeTo: window});
 document.body.appendChild(app.canvas);
+
 export const eventEmitter = new PIXI.EventEmitter();
 
 /* Return value for given key from `settings.json` */
@@ -49,9 +50,9 @@ async function createLightSources() {
     const texture = await PIXI.Assets.load('../resources/assets/red_block.png');
 
     const player = app.stage.children.filter(child => child instanceof Player)[0];
-    new LightSource(player, texture, 40, 0x990000);
+    new LightSource(player, 40, 0x990000);
     const interactable = app.stage.children.filter(child => child instanceof Interactable)[0];
-    new LightSource(interactable, texture, 100, 0x99ff00);
+    new LightSource(interactable, 100, 0x99ff00);
 }
 
 /* Read given JSON file and return data from given array */
@@ -61,7 +62,7 @@ async function readJSON(fileName, array) {
 }
 
 /* Recalculate `zIndex` and run `checkAbove` for blocks */
-export function tick() {
+export function tick(buildMode = false) {
     const spriteMap = new Map();
 
     app.stage.children.forEach(child => {
@@ -69,6 +70,11 @@ export function tick() {
             const key = `${child.gridX},${child.gridY},${child.gridZ}`; // Create key for the sprite
             spriteMap.set(key, child); // Create map of key (x,y,z) -> value (GameJamSprite)
             child.updateRenderingOrder();
+            if (buildMode) {
+                child.updateOverlay(0);
+            } else {
+                child.updateOverlay();
+            }
         }
     });
 
@@ -83,8 +89,8 @@ export function tick() {
 
 /* ---------- Main Logic ---------- */
 (async () => {
-    const levelName = await readSettings('level_name')
-    const buildMode = await readSettings('build_mode')
+    const levelName = await readSettings('level_name');
+    const buildMode = await readSettings('build_mode');
     const playerIndex = await readSettings('player_index');
 
     await createBlocks(levelName);
@@ -95,5 +101,5 @@ export function tick() {
         await createLightSources();
     }
 
-    tick(buildMode)
+    tick(buildMode);
 })();

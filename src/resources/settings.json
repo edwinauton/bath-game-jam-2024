@@ -1,0 +1,10 @@
+{
+  "build_mode": false,
+  "level_name": "test_screen",
+  "player_index": 0,
+  "player_spawn": {
+    "x": 9,
+    "y": 9,
+    "z": 1
+  }
+}

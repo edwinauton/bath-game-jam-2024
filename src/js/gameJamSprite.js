@@ -10,9 +10,10 @@ class GameJamSprite extends PIXI.Sprite {
     gridX;
     gridY;
     gridZ;
+    overlay;
 
     constructor(x, y, z, texture) {
-        super({texture: texture});
+        super(texture);
         this.anchor.set(0.5);
         this.gridToAbsolute(x, y, z);
 
@@ -24,6 +25,14 @@ class GameJamSprite extends PIXI.Sprite {
         this.createOverlay();
         this.updateOverlay();
         this.render();
+    }
+
+    /* Setup overlay for this block */
+    createOverlay() {
+        this.overlay = new PIXI.Sprite(this.texture);
+        this.overlay.anchor.set(this.anchor.x, this.anchor.y);
+        this.overlay.tint = 0x000000;
+        this.addChild(this.overlay);
     }
 
     /* Update tint and alpha for the overlay */
@@ -39,6 +48,7 @@ class GameJamSprite extends PIXI.Sprite {
         this.overlay.alpha = alpha;
     }
 
+    /* Additive blend the current colour overlay colour with the given colour */
     mergeColor(tint) {
         const r1 = (this.overlay.tint >> 16) & 0xFF;
         const g1 = (this.overlay.tint >> 8) & 0xFF;

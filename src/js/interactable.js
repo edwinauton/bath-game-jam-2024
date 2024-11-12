@@ -18,7 +18,6 @@ class Interactable extends GameJamSprite {
 
         this.label = label;
 
-        this.render();
         this.animate();
         this.addInteractivity();
     }
@@ -62,7 +61,7 @@ class Interactable extends GameJamSprite {
                 app.stage.children.forEach(child => {
                     if (child instanceof LightSource) {
                         if (child.target === this) {
-                            child.target = player;
+                            child.target = player; // Set light to follow player
                         }
                     }
                 })
@@ -74,19 +73,16 @@ class Interactable extends GameJamSprite {
 
     /* Check for a player in any adjacent tile */
     hasAdjacentPlayer() {
-        const players = app.stage.children.filter(child => child instanceof Player);
+        const player = app.stage.children.filter(child => child instanceof Player)[0];
         const playerMap = new Map();
+        const key = `${player.gridX},${player.gridY},${player.gridZ}`;  // Create key for current location
+        playerMap.set(key, player); // Create map of key (x,y,z) -> value (Player)
 
-        players.forEach(player => {
-            const key = `${player.gridX},${player.gridY},${player.gridZ}`;  // Create keys to add to map
-            playerMap.set(key, player); // Create map of key (x,y,z) -> value (Player)
-        });
-
-        // Check all four adjacent tiles to this one
-        const key1 = `${this.gridX + 1},${this.gridY},${this.gridZ}`; // Create key to search in map
-        const key2 = `${this.gridX - 1},${this.gridY},${this.gridZ}`; // Create key to search in map
-        const key3 = `${this.gridX},${this.gridY + 1},${this.gridZ}`; // Create key to search in map
-        const key4 = `${this.gridX},${this.gridY - 1},${this.gridZ}`; // Create key to search in map
+        // Create keys for each of the adjacent tiles
+        const key1 = `${this.gridX + 1},${this.gridY},${this.gridZ}`;
+        const key2 = `${this.gridX - 1},${this.gridY},${this.gridZ}`;
+        const key3 = `${this.gridX},${this.gridY + 1},${this.gridZ}`;
+        const key4 = `${this.gridX},${this.gridY - 1},${this.gridZ}`;
         return (playerMap.has(key1) || playerMap.has(key2) || playerMap.has(key3) || playerMap.has(key4));
     }
 

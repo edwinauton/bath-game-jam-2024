@@ -1,5 +1,5 @@
 import GameJamSprite from "./gameJamSprite.js";
-import {app, eventEmitter, tick} from "./main.js";
+import {eventEmitter, readSettings, tick} from "./main.js";
 
 /**
  *  @param {Number} x               grid x-coordinate for the block
@@ -15,7 +15,6 @@ class Block extends GameJamSprite {
 
         this.staticY = this.y;
 
-        this.render();
         this.animate();
     }
 
@@ -35,7 +34,7 @@ class Block extends GameJamSprite {
                 .to({y: this.staticY}, 150, createjs.Ease.sineInOut);
         });
 
-        this.addEventListener('click', (event) => {
+        this.addEventListener('click', async (event) => {
             createjs.Tween.get(this)
                 .to({y: this.staticY}, 150, createjs.Ease.sineInOut);
 
@@ -43,23 +42,8 @@ class Block extends GameJamSprite {
                 eventEmitter.emit('movePlayer', this);
             }
 
-            const buildMode = true;
+            const buildMode = await readSettings('build_mode');
             if (buildMode) {
-                const localPoint = event.data.getLocalPosition(this);
-                const face = this.getClickedFace(localPoint);
-
-                switch(face){
-                    case 'top':
-                        app.stage.add(new Block(this.gridX, this.gridY, this.gridZ + 1, this.texture));
-                        break;
-                    case 'left':
-                        app.stage.add(new Block(this.gridX, this.gridY + 1, this.gridZ, this.texture));
-                        break;
-                    case 'right':
-                        app.stage.add(new Block(this.gridX + 1, this.gridY, this.gridZ, this.texture));
-                        break;
-                }
-                tick();
                 const pointerPos = event.data.getLocalPosition(this);
                 this.build(pointerPos);
             }
@@ -75,7 +59,7 @@ class Block extends GameJamSprite {
     /* Add new block on clicked face */
     build(pointerPos) {
         const face = this.getClickedFace(pointerPos);
-        let offset = {x: 0, y: 0, z: 0}
+        let offset = {x: 0, y: 0, z: 0};
 
         switch (face) {
             case 'top':
@@ -106,13 +90,13 @@ class Block extends GameJamSprite {
         const bottom = {x: 0, y: this.height / 2};
 
         // Define faces in terms of points
-        const topFace = new PIXI.Polygon([new PIXI.Point(topLeft.x, topLeft.y), new PIXI.Point(top.x, top.y), new PIXI.Point(topRight.x, topRight.y), new PIXI.Point(centre.x, centre.y),])
-        const leftFace = new PIXI.Polygon([new PIXI.Point(bottomLeft.x, bottomLeft.y), new PIXI.Point(topLeft.x, topLeft.y), new PIXI.Point(centre.x, centre.y), new PIXI.Point(bottom.x, bottom.y),])
-        const rightFace = new PIXI.Polygon([new PIXI.Point(bottom.x, bottom.y), new PIXI.Point(centre.x, centre.y), new PIXI.Point(topRight.x, topRight.y), new PIXI.Point(bottomRight.x, bottomRight.y),])
+        const topFace = new PIXI.Polygon([new PIXI.Point(topLeft.x, topLeft.y), new PIXI.Point(top.x, top.y), new PIXI.Point(topRight.x, topRight.y), new PIXI.Point(centre.x, centre.y)]);
+        const leftFace = new PIXI.Polygon([new PIXI.Point(bottomLeft.x, bottomLeft.y), new PIXI.Point(topLeft.x, topLeft.y), new PIXI.Point(centre.x, centre.y), new PIXI.Point(bottom.x, bottom.y)]);
+        const rightFace = new PIXI.Polygon([new PIXI.Point(bottom.x, bottom.y), new PIXI.Point(centre.x, centre.y), new PIXI.Point(topRight.x, topRight.y), new PIXI.Point(bottomRight.x, bottomRight.y)]);
 
         // Check which face is clicked by the pointer
         if (topFace.contains(localPoint.x, localPoint.y)) {
-            return 'top'
+            return 'top';
         } else if (leftFace.contains(localPoint.x, localPoint.y)) {
             return 'left';
         } else if (rightFace.contains(localPoint.x, localPoint.y)) {
