@@ -21,7 +21,7 @@ async function createBlocks(scene) {
     const blocks = await readJSON('blocks.json', scene);
 
     for (const block of blocks) {
-        const texture = await PIXI.Assets.load(`../resources/assets/${block.texture}`);
+        const texture = await PIXI.Assets.load(`src/resources/assets/${block.texture}`);
         new Block(block.x, block.y, block.z, texture);
     }
 }
@@ -31,7 +31,7 @@ async function createInteractables(scene) {
     const interactables = await readJSON('interactables.json', scene);
 
     for (const interactable of interactables) {
-        const texture = await PIXI.Assets.load(`../resources/assets/${interactable.texture}`);
+        const texture = await PIXI.Assets.load(`src/resources/assets/${interactable.texture}`);
         new Interactable(interactable.x, interactable.y, interactable.z, texture, interactable.label);
     }
 }
@@ -41,7 +41,7 @@ async function createPlayer() {
     const playerIndex = await readSettings('player_index');
     const spawnLocation = await readSettings('player_spawn');
     const players = await readJSON('players.json', 'players');
-    const texture = await PIXI.Assets.load(`../resources/assets/${players[playerIndex].texture}`);
+    const texture = await PIXI.Assets.load(`src/resources/assets/${players[playerIndex].texture}`);
 
     const player = new Player(spawnLocation.x, spawnLocation.y, spawnLocation.z, texture);
     player.tint = players[playerIndex].tint;
@@ -58,7 +58,7 @@ async function createLightSources() {
 
 /* Read given JSON file and return data from given array */
 async function readJSON(fileName, array) {
-    const jsonFile = await PIXI.Assets.load({src: `../resources/${fileName}`, loader: 'loadJson'});
+    const jsonFile = await PIXI.Assets.load({src: `src/resources/${fileName}`, loader: 'loadJson'});
     return jsonFile[array];
 }
 
