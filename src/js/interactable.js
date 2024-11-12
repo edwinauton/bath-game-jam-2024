@@ -1,7 +1,6 @@
 import {app} from "./main.js";
-import Player from "./player.js";
 import GameJamSprite from "./gameJamSprite.js";
-import LightSource from "./lightSource.js";
+import Player from "./player.js";
 
 /**
  *  @param {Number} x               grid x-coordinate for the interactable
@@ -11,59 +10,31 @@ import LightSource from "./lightSource.js";
  *  @param {String} label           label to be displayed above the interactable when hovered over
  *  */
 class Interactable extends GameJamSprite {
+    description;
     label;
 
-    constructor(x, y, z, texture, label) {
+    constructor(x, y, z, texture, description) {
         super(x, y, z, texture);
 
-        this.label = label;
-
-        this.animate();
+        this.description = description;
+        this.createLabel();
         this.addInteractivity();
     }
 
-    /* Looping hovering animation */
-    animate() {
+    /* Actions when the interactable is interacted with */
+    addInteractivity() {
         this.eventMode = 'static'; // Allow animation
 
-        createjs.Tween.get(this, {loop: true}) // Loop animation
-            .to({y: this.y - (this.height / 10)}, 1000, createjs.Ease.sineInOut)
-            .to({y: this.y}, 1000, createjs.Ease.sineInOut);
-    }
-
-    /* Add hover and click functionality */
-    addInteractivity() {
-        const label = this.createLabel();
-
         this.addEventListener('pointerenter', () => {
-            app.stage.addChild(label);
-            createjs.Tween.get(label)
+            app.stage.addChild(this.label);
+            createjs.Tween.get(this.label)
                 .to({alpha: 1}, 100, createjs.Ease.sineInOut); // Fade in
         });
 
         this.addEventListener('pointerleave', () => {
-            createjs.Tween.get(label)
+            createjs.Tween.get(this.label)
                 .to({alpha: 0}, 100, createjs.Ease.sineInOut) // Fade out
-                .call(() => app.stage.removeChild(label)); // Remove item label
-        });
-
-        this.addEventListener('click', () => {
-            if (this.hasAdjacentPlayer()) {
-                createjs.Tween.get(label)
-                    .to({alpha: 0}, 100, createjs.Ease.sineInOut) // Fade out
-                    .call(() => app.stage.removeChild(label)); // Remove item label
-
-                createjs.Tween.get(this.scale)
-                    .to({x: 0, y: 0}, 250, createjs.Ease.sineInOut) // Fade out
-                    .call(() => this.hide()); // Remove item label
-
-                const player = app.stage.children.find(child => child instanceof Player);
-                app.stage.children.forEach(child => {
-                    if (child instanceof LightSource && child.target === this) {
-                        child.target = player; // Set light to follow player
-                    }
-                })
-            }
+                .call(() => app.stage.removeChild(this.label)); // Remove item label
         });
     }
 
@@ -82,11 +53,11 @@ class Interactable extends GameJamSprite {
 
     /* Return text label in a rectangle container */
     createLabel() {
-        const rectangle = new PIXI.Graphics();
+        const container = new PIXI.Graphics();
         const labelStyle = new PIXI.TextStyle({
             fontFamily: "Courier New", fontSize: 16, fill: 0xFFFFFF
         })
-        const text = new PIXI.Text(this.label, labelStyle)
+        const text = new PIXI.Text(this.description, labelStyle)
 
         const padding = 7;
         const width = text.width + 2 * padding;
@@ -95,12 +66,13 @@ class Interactable extends GameJamSprite {
         text.anchor.set(0.5);
         text.position.set(width / 2, height / 2);
 
-        rectangle.roundRect(0, 0, width, height, 7).fill('0x000000A8');
-        rectangle.position.set(this.x - width / 2, this.y - 45)
-        rectangle.alpha = 0; // Start hidden
-        rectangle.zIndex = Infinity; // Always on top
-        rectangle.addChild(text);
-        return rectangle;
+        container.roundRect(0, 0, width, height, 7).fill('0x000000A8');
+        container.position.set(this.x - width / 2, this.y - 45)
+        container.alpha = 0; // Start hidden
+        container.zIndex = Infinity; // Always on top
+        container.addChild(text);
+
+        this.label = container;
     }
 }
 

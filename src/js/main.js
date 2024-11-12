@@ -1,9 +1,10 @@
 import Block from './block.js';
+import Flashlight from "./flashlight.js";
 import GameJamSprite from "./gameJamSprite.js";
-import Interactable from './interactable.js';
-import Player from './player.js';
+import GlobalLightSource from "./globalLightSource.js";
 import LightSource from './lightSource.js';
 import LightSwitch from './lightSwitch.js';
+import Player from './player.js';
 
 /* Setup PixiJS application */
 export const app = new PIXI.Application();
@@ -27,16 +28,6 @@ async function createBlocks(scene) {
     }
 }
 
-/* Read in interactables and instantiate them */
-async function createInteractables(scene) {
-    const interactables = await readJSON('interactables.json', scene);
-
-    for (const interactable of interactables) {
-        const texture = await PIXI.Assets.load(`src/resources/assets/${interactable.texture}`);
-        new Interactable(interactable.x, interactable.y, interactable.z, texture, interactable.label);
-    }
-}
-
 /* Read in player and instantiate it */
 async function createPlayer() {
     const playerIndex = await readSettings('player_index');
@@ -53,15 +44,21 @@ async function createLightSources() {
     const player = app.stage.children.find(child => child instanceof Player);
     new LightSource(player, 40, player.tint); // Set player light colour to player colour
 
-    const interactable = app.stage.children.find(child => child instanceof Interactable && child.label === 'Flashlight');
-    new LightSource(interactable, 100, (Math.random() * 0xFFFFFF)); // Randomise flashlight colour
+    const flashlight = app.stage.children.find(child => child instanceof Flashlight);
+    new LightSource(flashlight, 100, (Math.random() * 0xFFFFFF)); // Randomise flashlight colour
+}
+
+/* Read in interactables and instantiate them */  // TODO: Generalise instantiating interactables
+async function createFlashlight() {
+    const texture = await PIXI.Assets.load('src/resources/assets/torch_white.png');
+    new Flashlight(18, 18, 1, texture);
 }
 
 /* Instantiate Light Switch */
 async function createLightSwitch() {
-    const texture = await PIXI.Assets.load('../resources/assets/blue_block.png');
-    const pos = await readSettings('player_spawn');
-    new LightSwitch(pos.x, pos.y, pos.z, texture, 0x00ff00, 0.5, false);
+    const texture = await PIXI.Assets.load('src/resources/assets/blue_block.png');
+    const light = new GlobalLightSource(0x333333);
+    new LightSwitch(10, 10, 1, texture, light);
 }
 
 /* Read given JSON file and return data from given array */
@@ -105,8 +102,9 @@ function tick(buildMode = false) {
     await createBlocks(levelName);
 
     if (!buildMode) {
-        await createInteractables(levelName);
         await createPlayer(playerIndex);
+        await createFlashlight();
+        await createLightSwitch();
         await createLightSources();
     }
 

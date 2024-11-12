@@ -1,5 +1,5 @@
-import GameJamSprite from './gameJamSprite.js';
 import {app} from "./main.js";
+import GameJamSprite from './gameJamSprite.js';
 
 /**
  *  @param {Number} target          target for light source to follow
@@ -7,18 +7,16 @@ import {app} from "./main.js";
  *  @param {Number} tint            tint colour of light source
  *  */
 class LightSource extends PIXI.Sprite {
-    isOn;
     radius;
     target;
 
-    constructor(target, radius, tint = 0xFFFFFF, alpha = 0.5, isOn = false) {
+    constructor(target, radius, tint) {
         super(target.texture);
 
-        this.alpha = alpha;
+        this.alpha = 0;
         this.target = target;
         this.radius = radius;
         this.tint = tint;
-        this.isOn = isOn;
 
         this.updateLighting();
         app.stage.addChild(this);
@@ -31,19 +29,13 @@ class LightSource extends PIXI.Sprite {
 
     /* Apply light to all blocks within an ellipse */
     applyLight() {
-        let alpha = 0;
-        if (this.isOn) {
-            alpha = this.alpha
-        } else {
-            alpha = 0;
-        }
         const pos = {x: this.x, y: this.y + this.height / 2};
         const lights = app.stage.children.filter(child => child instanceof LightSource);
         const sprites = app.stage.children.filter(child => child instanceof GameJamSprite);
 
         sprites.forEach(sprite => {
             if (this.isPointInEllipse(sprite.x, sprite.y, pos.x, pos.y, this.radius, 0.5 * this.radius)) {
-                sprite.updateOverlay(alpha, this.tint, lights);
+                sprite.updateOverlay(0.5, this.tint, lights);
             }
         });
     }

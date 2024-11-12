@@ -1,30 +1,30 @@
 import Interactable from "./interactable.js";
-import GlobalLightSource from "./globalLightSource.js";
-import {app} from "./main.js";
 
+/**
+ *  @param {Number} x                   grid x-coordinate for the light switch
+ *  @param {Number} y                   grid y-coordinate for the light switch
+ *  @param {Number} z                   grid z-coordinate for the light switch
+ *  @param {Texture} texture            texture asset to be rendered for the light switch
+ *  @param {GlobalLightSource} light    light controlled by the light switch
+ *  */
 class LightSwitch extends Interactable {
-    lightSource;
+    light;
 
-    constructor(x, y, z, texture, tint = 0xffffff, alpha = 0.5, on = false) {
+    constructor(x, y, z, texture, light) {
         super(x, y, z, texture, 'Light Switch');
-        this.lightSource = new GlobalLightSource(texture, tint, alpha, on);
-        app.stage.addChild(this)
+
+        this.light = light;
+        this.toggle();
+    }
+
+    /* Toggle global light */
+    toggle() {
         this.addEventListener('click', () => {
-            console.log('click');
             if (this.hasAdjacentPlayer()) {
-                this.toggleLight();
+                this.light.isOn = !this.light.isOn;
+                this.light.applyLight()
             }
         });
-    }
-
-    toggleLight() {
-        this.lightSource.isOn = !this.lightSource.isOn;
-        console.log('Light Switch toggled to ' + this.lightSource.isOn);
-        this.applyLight();
-    }
-
-    applyLight() {
-        this.lightSource.applyLight();
     }
 }
 

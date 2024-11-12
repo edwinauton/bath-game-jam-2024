@@ -1,5 +1,5 @@
-import GameJamSprite from "./gameJamSprite.js";
 import {eventEmitter, readSettings} from "./main.js";
+import GameJamSprite from "./gameJamSprite.js";
 
 /**
  *  @param {Number} x               grid x-coordinate for the block

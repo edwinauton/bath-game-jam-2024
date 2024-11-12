@@ -32,14 +32,13 @@ class GameJamSprite extends PIXI.Sprite {
         this.overlay = new PIXI.Sprite(this.texture);
         this.overlay.anchor.set(this.anchor.x, this.anchor.y);
         this.overlay.tint = 0x000000;
-        this.addChild(this.overlay);
+        app.stage.addChild(this.overlay);
     }
 
     /* Update tint and alpha for `this.overlay` */
-    updateOverlay(alpha = 0.9, tint = 0x000000, lights = []) {
+    updateOverlay(alpha = 0.7, tint = 0x000000, lights = []) {
         const isLit = lights.some(light => light.isPointInEllipse(this.x, this.y, light.x, light.y, light.radius, 0.5 * light.radius));
-
-        this.overlay.tint = isLit ? this.mergeColor(tint) : tint; // Merge colours, or reset tint if not in radius of any light
+        this.overlay.tint = isLit ? this.mergeColor(tint) : tint; // Merge colours if in range of light sources else reset tint
         this.overlay.alpha = alpha;
     }
 
@@ -68,13 +67,6 @@ class GameJamSprite extends PIXI.Sprite {
         this.x = (0.50 * x * this.width) - (0.50 * y * this.height) + xCentre;
         this.y = (0.25 * x * this.width) + (0.25 * y * this.height) + yAlign - zOffset;
         return {x: this.x, y: this.y};
-    }
-
-    /* Setup overlay for this block */
-    createOverlay() {
-        this.overlay = new PIXI.Sprite(this.texture);
-        this.overlay.anchor.set(this.anchor.x, this.anchor.y);
-        this.overlay.tint = 0x000000;
     }
 
     /* Update `this.zIndex` */
