@@ -28,7 +28,7 @@ class GameJamSprite extends PIXI.Sprite {
     }
 
     /* Update tint and alpha for the overlay */
-    updateOverlay(tint = 0x000000, alpha = 0.5) {
+    updateOverlay(tint = 0x000000, alpha = 0.9) {
         this.overlay.tint = tint;
         this.overlay.alpha = alpha;
     }

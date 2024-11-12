@@ -1,12 +1,10 @@
 import Interactable from "./interactable.js";
+import GlobalLightSource from "./globalLightSource.js";
 
 class LightSwitch extends Interactable {
-    constructor(x, y, z, texture, allBlocks, LightFilter=0xffffff, intensity=0.5) {
+    constructor(x, y, z, texture, tint=0xffffff, alpha=0.5, on=false) {
         super(x, y, z, texture, 'Light Switch');
-        this.lightFilter = LightFilter;
-        this.intensity = intensity;
-        this.allBlocks = allBlocks;
-        this.on = False
+        this.lightSource = new GlobalLightSource(texture, tint, alpha, on);    
     }
 
     addInteractivity() {
@@ -15,26 +13,20 @@ class LightSwitch extends Interactable {
         this.addEventListener('click', () => {
             console.log('click');
             if (this.hasAdjacentPlayer()) {
-                this.toggleLight(this.allBlocks);
+                this.toggleLight();
             }
         });
     }
 
-    toggleLight(allBlocks) {
-        for (const block of allBlocks) {
-            let newFilter;
-            let newIntensity;
-            if (this.on) {
-                newFilter = this.lightFilter;
-                newIntensity = this.intensity;
-            } else {
-                newFilter = this.lightFilter;
-                newIntensity = this.intensity;
-            }
-            block.updateOverlay(newFilter, newIntensity);
-        }
+    toggleLight() {
+        this.lightSource.setOnState(!this.lightSource.getOnState());
+        console.log('Light Switch toggled to ' + this.lightSource.getOnState());
+        this.applyLight();
+    }
+
+    applyLight() {
+        this.lightSource.applyLight();
     }
 }
-
 export default LightSwitch;
 

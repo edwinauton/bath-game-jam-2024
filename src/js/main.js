@@ -57,10 +57,9 @@ async function createLightSource() {
 
 /* Instantiate Light Switch */
 async function createLightSwitch() {
-    const texture = await PIXI.Assets.load('../resources/assets/green_block.png');
+    const texture = await PIXI.Assets.load('../resources/assets/blue_block.png');
     const pos = await readSettings('player_spawn');
-    const allBlocks = app.stage.children.filter(child => child instanceof Block);
-    new LightSwitch(pos.x, pos.y, pos.z, texture, allBlocks, 0xff0000, 0.5);
+    new LightSwitch(pos.x, pos.y, pos.z, texture, 0x00ff00, 0.5, false);
 }
 
 /* Read given JSON file and return data from given array */

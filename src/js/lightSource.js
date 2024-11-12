@@ -11,20 +11,35 @@ class LightSource extends GameJamSprite {
     radius;
     target;
 
-    constructor(target, texture, radius) {
+    constructor(target, texture, radius, tint=0xffffff, alpha=0.5, on=false) {
         super(target.gridX, target.gridY, target.gridZ, texture);
 
-        this.alpha = 0;
+        this.alpha = alpha;
         this.radius = radius;
         this.target = target;
-
-        this.applyLight(radius);
+        this.tint = tint;
+        this.alpha = alpha;
+        this.onState = on;
     }
 
     /* Update block tints to illuminate blocks */
     applyLight() {
+        let alpha = 0;
+        if (this.onState) {
+            alpha = this.alpha
+        } else {
+            alpha = 0;
+        }
         const sprites = this.getSpritesInEllipse();
-        this.updateTints(sprites, 0xffffff, 0.5);
+        this.updateTints(sprites, this.tint, alpha);
+    }
+
+    setOnState(newState) {
+        this.onState = newState;
+    }
+
+    getOnState() {
+        return this.onState;
     }
 
     /* Return if `(x,y)` is in the calculated ellipse */
