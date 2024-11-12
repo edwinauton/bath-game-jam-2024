@@ -3,6 +3,7 @@ import GameJamSprite from "./gameJamSprite.js";
 import Interactable from './interactable.js';
 import Player from './player.js';
 import LightSource from './lightSource.js';
+import LightSwitch from './lightSwitch.js';
 
 /* Setup PixiJS application */
 export const app = new PIXI.Application();
@@ -54,6 +55,13 @@ async function createLightSources() {
 
     const interactable = app.stage.children.find(child => child instanceof Interactable && child.label === 'Flashlight');
     new LightSource(interactable, 100, (Math.random() * 0xFFFFFF)); // Randomise flashlight colour
+}
+
+/* Instantiate Light Switch */
+async function createLightSwitch() {
+    const texture = await PIXI.Assets.load('../resources/assets/blue_block.png');
+    const pos = await readSettings('player_spawn');
+    new LightSwitch(pos.x, pos.y, pos.z, texture, 0x00ff00, 0.5, false);
 }
 
 /* Read given JSON file and return data from given array */

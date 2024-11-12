@@ -26,7 +26,7 @@ class GameJamSprite extends PIXI.Sprite {
         this.updateOverlay();
         this.render();
     }
-
+  
     /* Setup overlay for this block and render it */
     createOverlay() {
         this.overlay = new PIXI.Sprite(this.texture);
@@ -36,7 +36,7 @@ class GameJamSprite extends PIXI.Sprite {
     }
 
     /* Update tint and alpha for `this.overlay` */
-    updateOverlay(alpha = 0.5, tint = 0x000000, lights = []) {
+    updateOverlay(alpha = 0.9, tint = 0x000000, lights = []) {
         const isLit = lights.some(light => light.isPointInEllipse(this.x, this.y, light.x, light.y, light.radius, 0.5 * light.radius));
 
         this.overlay.tint = isLit ? this.mergeColor(tint) : tint; // Merge colours, or reset tint if not in radius of any light

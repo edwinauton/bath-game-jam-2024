@@ -10,18 +10,18 @@ class LightSource extends PIXI.Sprite {
     radius;
     target;
 
-    constructor(target, radius, tint) {
+    constructor(target, radius, tint=0xFFFFFF, alpha=0.5, on=false) {
         super(target.texture);
 
-        this.alpha = 0;
+        this.alpha = alpha;
         this.target = target;
         this.radius = radius;
         this.tint = tint;
+        this.on = on;
 
         this.updateLighting();
         app.stage.addChild(this);
     }
-
 
     /* Return if `(x,y)` is in the calculated ellipse */
     isPointInEllipse(x, y, h, k, a, b) {
@@ -30,6 +30,13 @@ class LightSource extends PIXI.Sprite {
 
     /* Apply light to all blocks within an ellipse */
     applyLight() {
+      
+        let alpha = 0;
+        if (this.onState) {
+            alpha = this.alpha
+        } else {
+            alpha = 0;
+        }
         const pos = {x: this.x, y: this.y + this.height / 2};
         const lights = app.stage.children.filter(child => child instanceof LightSource);
         const sprites = app.stage.children.filter(child => child instanceof GameJamSprite);
