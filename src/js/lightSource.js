@@ -11,21 +11,17 @@ class LightSource extends GameJamSprite {
     radius;
     target;
 
-    constructor(target, texture, radius) {
+    constructor(target, texture, radius, tint) {
         super(target.gridX, target.gridY, target.gridZ, texture);
 
         this.alpha = 0;
         this.radius = radius;
         this.target = target;
+        this.tint = tint;
 
-        this.applyLight(radius);
+        this.applyLight();
     }
 
-    /* Update block tints to illuminate blocks */
-    applyLight() {
-        const sprites = this.getSpritesInEllipse();
-        this.updateTints(sprites, 0xffffff, 0.5);
-    }
 
     /* Return if `(x,y)` is in the calculated ellipse */
     isPointInEllipse(x, y, h, k, a, b) {
@@ -33,22 +29,13 @@ class LightSource extends GameJamSprite {
     }
 
     /* Return list of sprites within the ellipse */
-    getSpritesInEllipse() {
-        const sprites_in_radius = [];
+    applyLight() {
         const pos = {x: this.x, y: this.y + this.height / 2};
         const sprites = app.stage.children.filter(child => child instanceof GameJamSprite);
         for (const sprite of sprites) {
             if (this.isPointInEllipse(sprite.x, sprite.y, pos.x, pos.y, this.radius, 0.5 * this.radius)) {
-                sprites_in_radius.push(sprite);
+                sprite.updateOverlay(this.tint, 0.5)
             }
-        }
-        return sprites_in_radius;
-    }
-
-    /* For each given sprite, update the tint */
-    updateTints(sprites, tint, alpha) {
-        for (const sprite of sprites) {
-            sprite.updateOverlay(tint, alpha);
         }
     }
 }

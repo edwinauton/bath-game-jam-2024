@@ -49,9 +49,9 @@ async function createLightSource() {
     const texture = await PIXI.Assets.load('../resources/assets/red_block.png');
 
     const player = app.stage.children.filter(child => child instanceof Player)[0];
-    new LightSource(player, texture, 50);
+    new LightSource(player, texture, 50, 0xFFFFFF);
     const interactable = app.stage.children.filter(child => child instanceof Interactable)[0];
-    new LightSource(interactable, texture, 100);
+    new LightSource(interactable, texture, 100, 0XFFFFFF);
 }
 
 /* Read given JSON file and return data from given array */
