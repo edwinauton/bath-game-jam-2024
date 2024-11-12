@@ -3,6 +3,7 @@ import GameJamSprite from "./gameJamSprite.js";
 import Interactable from './interactable.js';
 import Player from './player.js';
 import LightSource from './lightSource.js';
+import LightSwitch from './lightSwitch.js';
 
 /* Setup PixiJS application */
 export const app = new PIXI.Application();
@@ -54,6 +55,14 @@ async function createLightSource() {
     new LightSource(interactable, texture, 100);
 }
 
+/* Instantiate Light Switch */
+async function createLightSwitch() {
+    const texture = await PIXI.Assets.load('../resources/assets/green_block.png');
+    const pos = await readSettings('player_spawn');
+    const allBlocks = app.stage.children.filter(child => child instanceof Block);
+    new LightSwitch(pos.x, pos.y, pos.z, texture, allBlocks, 0xff0000, 0.5);
+}
+
 /* Read given JSON file and return data from given array */
 async function readJSON(fileName, array) {
     const jsonFile = await PIXI.Assets.load({src: `../resources/${fileName}`, loader: 'loadJson'});
@@ -101,6 +110,7 @@ export function tick(buildMode = false) {
         const player = await readSettings('player_index');
         await createPlayer(player);
         await createLightSource();
+        await createLightSwitch();
         tick();
     } else {
         tick(true);
